@@ -1,0 +1,63 @@
+
+name: Deploy SmartHotel to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Laravel Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add Hostinger to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy SmartHotel
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
+            'bash -s' <<'REMOTE'
+
+          set -e
+
+          cd /home/u188403026/domains/netsetu.co.in/public_html/smarthotel
+
+          echo "Starting SmartHotel deployment..."
+
+          # Preserve production environment
+          test -f .env || {
+            echo ".env file missing!"
+            exit 1
+          }
+
+          # Get latest code
+          git pull --ff-only origin main
+
+          # Install production dependencies
+          composer install --no-dev --optimize-autoloader --no-interaction
+
+          # Run database migrations
+          php artisan migrate --force
+
+          # Clear and rebuild Laravel caches
+          php artisan optimize:clear
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+
+          echo "SmartHotel deployment completed!"
+
+          REMOTE
