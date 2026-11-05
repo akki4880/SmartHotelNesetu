@@ -1,0 +1,164 @@
+@php
+$notifications = \App\Models\Notification::where('receiver_id', auth()->id())
+->where('is_deleted', 0)
+->latest()
+->take(5)
+->get();
+
+$unreadCount = \App\Models\Notification::where('receiver_id', auth()->id())
+->where('is_read', 0)
+->count();
+@endphp
+<header class="page-header" role="banner">
+    <!-- we need this logo when user switches to nav-function-top -->
+    <div class="page-logo">
+        <a href="#" class="page-logo-link press-scale-down d-flex align-items-center position-relative" data-toggle="modal" data-target="#modal-shortcut">
+            <img src="{{asset('assets/img/logo.png')}}" alt="SmartAdmin WebApp" aria-roledescription="logo">
+            <span class="page-logo-text mr-1">Smart Hotel</span>
+            <span class="position-absolute text-white opacity-50 small pos-top pos-right mr-2 mt-n2"></span>
+            <i class="fal fa-angle-down d-inline-block ml-1 fs-lg color-primary-300"></i>
+        </a>
+    </div>
+    <!-- DOC: nav menu layout change shortcut -->
+    <div class="hidden-md-down dropdown-icon-menu position-relative mt-3">
+        <a href="#" class="header-btn btn js-waves-off" data-action="toggle" data-class="nav-function-hidden" title="Hide Navigation">
+            <i class="ni ni-menu"></i>
+        </a>
+        <ul>
+            <li>
+                <a href="#" class="btn js-waves-off" data-action="toggle" data-class="nav-function-minify" title="Minify Navigation">
+                    <i class="ni ni-minify-nav"></i>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="btn js-waves-off" data-action="toggle" data-class="nav-function-fixed" title="Lock Navigation">
+                    <i class="ni ni-lock-nav"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!-- DOC: mobile button appears during mobile width -->
+    <div class="hidden-lg-up">
+        <a href="#" class="header-btn btn press-scale-down" data-action="toggle" data-class="mobile-nav-on">
+            <i class="ni ni-menu"></i>
+        </a>
+    </div>
+    <div class="search">
+        <!-- <form class="app-forms hidden-xs-down" role="search" action="https://www.gotbootstrap.com/themes/smartadmin/4.6.0/page_search.html" autocomplete="off">
+              <input type="text" id="search-field" placeholder="Search for anything" class="form-control" tabindex="1">
+              <a href="#" onclick="return false;" class="btn-danger btn-search-close js-waves-off d-none" data-action="toggle" data-class="mobile-search-on">
+                  <i class="fal fa-times"></i>
+              </a>
+          </form> -->
+
+
+        @auth
+        @if(auth()->user()->user_role_id == 1)
+        <div class="form-group mt-3" style="width: 350px;">
+            <select class="select2 form-control" id="hotelSwitcher">
+                <option value="">Select Hotel</option>
+
+                @foreach($headerHotels as $hotel)
+                <option value="{{ $hotel?->admin?->id }}"
+                    {{ session('active_hotel_admin_id') == $hotel?->admin?->id ? 'selected' : '' }}>
+                    {{ $hotel->hotel_name }}
+                </option>
+                @endforeach
+
+            </select>
+        </div>
+        @endif
+        @endauth
+    </div>
+    @if(session()->has('impersonator_id'))
+    <a href="{{ route('users.stopImpersonation') }}"
+        class="btn btn-sm btn-danger ml-2 mt-3">
+        Back to Super Admin
+    </a>
+    @endif
+    <div class="ml-auto d-flex">  
+        <!-- app user menu -->
+        <div>
+            <a href="#" data-toggle="dropdown" title="{{ Auth::user()->email ?? ''}}" class="header-icon d-flex align-items-center justify-content-center ml-2">
+                <!-- <img src="{{asset('assets/img/demo/avatars/avatar-admin.png')}}" class="profile-image rounded-circle" alt="{{ Auth::user()->name ?? '' }}"> -->
+                <div class="profile-initials rounded-circle">
+                    {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                </div>
+                <!-- you can also add username next to the avatar with the codes below:
+									<span class="ml-1 mr-1 text-truncate text-truncate-header hidden-xs-down">Me</span>
+									<i class="ni ni-chevron-down hidden-xs-down"></i> -->
+            </a>
+            <div class="dropdown-menu dropdown-menu-animated dropdown-lg">
+                <div class="dropdown-header bg-trans-gradient d-flex flex-row py-4 rounded-top">
+                    <div class="d-flex flex-row align-items-center mt-1 mb-1 color-white">
+                        <span class="mr-2">
+                            <!-- <img src="{{asset('assets/img/demo/avatars/avatar-admin.png')}}" class="rounded-circle profile-image" alt="{{ Auth::user()->name ?? '' }}"> -->
+                            <div class="profile-initials rounded-circle">
+                                {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                            </div>
+                        </span>
+                        <div class="info-card-text">
+                            <div class="fs-lg text-truncate text-truncate-lg">{{ Auth::user()->name ?? '' }}</div>
+                            <span class="text-truncate text-truncate-md opacity-80">{{ Auth::user()->email ?? '' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-divider m-0"></div>
+                <!-- <a href="#" class="dropdown-item" data-action="app-reset">
+                      <span data-i18n="drpdwn.reset_layout">Reset Layout</span>
+                  </a> -->
+                <a href="#" class="dropdown-item" data-toggle="modal" data-target=".js-modal-settings">
+                    <span data-i18n="drpdwn.settings">Settings</span>
+                </a>
+                <div class="dropdown-divider m-0"></div>
+                <!-- <a href="#" class="dropdown-item" data-action="app-fullscreen">
+                      <span data-i18n="drpdwn.fullscreen">Fullscreen</span>
+                      <i class="float-right text-muted fw-n">F11</i>
+                  </a> -->
+                <!-- <a href="#" class="dropdown-item" data-action="app-print">
+                      <span data-i18n="drpdwn.print">Print</span>
+                      <i class="float-right text-muted fw-n">Ctrl + P</i>
+                  </a> -->
+                <!-- <div class="dropdown-multilevel dropdown-multilevel-left">
+                      <div class="dropdown-item">
+                          Language
+                      </div>
+                      <div class="dropdown-menu">
+                          <a href="#?lang=fr" class="dropdown-item" data-action="lang" data-lang="fr">Français</a>
+                          <a href="#?lang=en" class="dropdown-item active" data-action="lang" data-lang="en">English (US)</a>
+                          <a href="#?lang=es" class="dropdown-item" data-action="lang" data-lang="es">Español</a>
+                          <a href="#?lang=ru" class="dropdown-item" data-action="lang" data-lang="ru">Русский язык</a>
+                          <a href="#?lang=jp" class="dropdown-item" data-action="lang" data-lang="jp">日本語</a>
+                          <a href="#?lang=ch" class="dropdown-item" data-action="lang" data-lang="ch">中文</a>
+                      </div>
+                  </div> -->
+                  <a href="{{ route('tickets.index') }}" 
+                    class="dropdown-item">
+                    Support
+                </a>
+                <div class="dropdown-divider m-0"></div>
+
+                <a href="{{ route('logout') }}"
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                    class="dropdown-item">
+                    {{ __('Log Out') }}
+                </a>
+
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                    @csrf
+                </form>
+
+            </div>
+        </div>
+    </div>
+</header>
+
+<script>
+    $(document).on('click', '.unread', function () {
+    let id = $(this).data('id');
+
+    $.post('/notifications/read/' + id, {
+        _token: '{{ csrf_token() }}'
+    });
+});
+</script>
