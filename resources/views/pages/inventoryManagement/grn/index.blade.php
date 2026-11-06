@@ -884,6 +884,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
     function renderGrnItems($wrapper, items) {
         $wrapper.html('');
+        console.log('Raw items:', items);
         items = JSON.parse(items || '[]');
         if (!Array.isArray(items) || items.length === 0) {
             $('.grnItemsWrapper').html(
@@ -891,7 +892,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             );
             return;
         }
-
+        console.log('Parsed items:', items);
+        console.log('Items count:', items.length);
         items.forEach(function(item, index) {
 
             let received = parseFloat(item.received_quantity) || 0;
