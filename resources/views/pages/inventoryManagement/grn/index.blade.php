@@ -146,7 +146,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                         data-discount_amount="{{ $grn->discount_amount }}"
                                         data-sub_total="{{ $grn->sub_total }}"
                                         data-grand_total="{{ $grn->grand_total }}"
-                                        data-items="{{ json_encode($grn->edit_items) }}">
+                                        data-items='@json($grn->edit_items)'>
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     @endif
@@ -885,8 +885,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     function renderGrnItems($wrapper, items) {
         $wrapper.html('');
         items = JSON.parse(items || '[]');
-        if (!items || items.length === 0) {
-            $wrapper.html('<div class="alert alert-info">No items found.</div>');
+        if (!Array.isArray(items) || items.length === 0) {
+            $('.grnItemsWrapper').html(
+                '<p class="text-center text-muted">No items found.</p>'
+            );
             return;
         }
 
