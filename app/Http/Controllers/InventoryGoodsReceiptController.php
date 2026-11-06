@@ -548,19 +548,4 @@ class InventoryGoodsReceiptController extends Controller implements HasMiddlewar
         ]);
     }
 
-    public function getItems($id)
-    {
-        $grn = InventoryGoodsReceipt::with('items')->find($id);
-        if (!$grn) {
-            return response()->json([
-                'status' => false,
-                'message' => 'GRN not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'status' => true,
-            'data' => $grn->items
-        ]);
-    }
 }

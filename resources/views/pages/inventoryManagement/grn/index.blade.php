@@ -147,7 +147,22 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                         data-discount_amount="{{ $grn->discount_amount }}"
                                         data-sub_total="{{ $grn->sub_total }}"
                                         data-grand_total="{{ $grn->grand_total }}"
-                                        data-items='@json($grn->items)'>
+                                        data-items='@json($grn->items->map(function ($item) {
+    return [
+        "item_id" => $item->item_id,
+        "item_name" => $item->item->name ?? "",
+        "purchase_order_item_id" => $item->purchase_order_item_id,
+        "unit_id" => $item->unit_id,
+        "unit_name" => $item->unit->name ?? "",
+        "ordered_quantity" => $item->purchaseOrderItem->quantity ?? 0,
+        "remaining_quantity" => ($item->purchaseOrderItem->quantity ?? 0) - $item->received_quantity,
+        "received_quantity" => $item->received_quantity,
+        "rate" => $item->rate,
+        "tax_percentage" => $item->tax_percentage,
+        "tax_amount" => $item->tax_amount,
+        "total" => $item->total
+    ];
+})'>
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     @endif
@@ -791,7 +806,6 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         let $vendor = $editModal.find('.vendor-select');
         let $po = $editModal.find('.po-select');
 
-        // Get values
         let vendorId = el.attr('data-vendor_id');
         let poId = el.attr('data-purchase_order_id');
 
@@ -799,59 +813,217 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         let invoiceDate = el.attr('data-invoice_date');
 
         // BASIC FIELDS
-        $editModal.find('input[name="grn_date"]').val(grnDate);
-        $editModal.find('input[name="invoice_number"]').val(el.attr('data-invoice_number'));
-        $editModal.find('input[name="invoice_date"]').val(invoiceDate);
+        $editModal.find('input[name="grn_date"]').val(
+            grnDate ? grnDate.substring(0, 10) : ''
+        );
 
-        $editModal.find('textarea[name="notes"]').val(el.attr('data-notes'));
+        $editModal.find('input[name="invoice_number"]').val(
+            el.attr('data-invoice_number')
+        );
 
-        $editModal.find('.discountAmount').val(el.attr('data-discount_amount'));
+        $editModal.find('input[name="invoice_date"]').val(
+            invoiceDate ? invoiceDate.substring(0, 10) : ''
+        );
+
+        $editModal.find('textarea[name="notes"]').val(
+            el.attr('data-notes')
+        );
+
+        $editModal.find('.discountAmount').val(
+            el.attr('data-discount_amount')
+        );
 
         // SUMMARY
-        $editModal.find('.subTotalText').text('₹ ' + (el.attr('data-sub_total') || '0.00'));
-        $editModal.find('.discountText').text('₹ ' + (el.attr('data-discount_amount') || '0.00'));
-        $editModal.find('.grandTotalText').text('₹ ' + (el.attr('data-grand_total') || '0.00'));
+        $editModal.find('.subTotalText').text(
+            '₹ ' + (el.attr('data-sub_total') || '0.00')
+        );
 
-        // Set vendor
-        $vendor.val(vendorId).trigger('change.select2');
+        $editModal.find('.discountText').text(
+            '₹ ' + (el.attr('data-discount_amount') || '0.00')
+        );
 
-        // Reset PO dropdown
-        $po.html('<option value="">Loading...</option>').trigger('change');
+        $editModal.find('.grandTotalText').text(
+            '₹ ' + (el.attr('data-grand_total') || '0.00')
+        );
 
-        // Load vendor purchase orders
+        // VENDOR
+        $vendor.val(vendorId).trigger('change');
+
+        // PO
+        $po.html('<option value="">Loading...</option>');
+
+        // LOAD PURCHASE ORDERS
         $.ajax({
             url: '/inventory-management/vendors/' + vendorId + '/purchase-orders?formaction=edit',
             type: 'GET',
+
             success: function(res) {
 
                 let options = '<option value="">Select PO</option>';
 
-                res.data.forEach(po => {
-                    options += `<option value="${po.id}">${po.po_number}</option>`;
+                res.data.forEach(function(po) {
+                    options += `
+                    <option value="${po.id}">
+                        ${po.po_number}
+                    </option>
+                `;
                 });
 
                 $po.html(options);
 
-                // Select existing PO AFTER options are loaded
-                $po.val(poId).trigger('change.select2');
+                // Select existing PO
+                $po.val(poId).trigger('change');
 
-                // Load existing GRN items
-                $editModal.find('.grnItemsWrapper').html(
-                    '<div class="text-center p-3">Loading...</div>'
+                // GET ITEMS DIRECTLY FROM EDIT BUTTON
+                let items = el.data('items');
+
+                // Render items
+                renderGrnItems(
+                    $editModal.find('.grnItemsWrapper'),
+                    items
                 );
 
-                $.get("{{ url('grnitems') }}/" + id + "/items", function(res) {
-                    $editModal.find('.grnItemsWrapper').html(res);
-                    calculateSummary();
-                });
+                calculateSummary();
 
+                // Show modal
                 $editModal.modal('show');
+
             },
+
             error: function() {
                 toastr.error('Failed to load purchase orders');
             }
+
         });
 
     });
+
+    function renderGrnItems($wrapper, items) {
+
+        $wrapper.html('');
+
+        if (!items || items.length === 0) {
+            $wrapper.html('<div class="alert alert-info">No items found.</div>');
+            return;
+        }
+
+        items.forEach(function(item, index) {
+
+            let received = parseFloat(item.received_quantity) || 0;
+            let remaining = parseFloat(item.remaining_quantity) || 0;
+            let rate = parseFloat(item.rate) || 0;
+            let tax = parseFloat(item.tax_percentage) || 0;
+
+            let html = `
+            <div class="item-card mb-3">
+                <div class="row">
+
+                    <div class="col-md-2">
+                        <label>Item</label>
+
+                        <input type="text"
+                            class="form-control"
+                            value="${item.item_name || ''}"
+                            readonly>
+
+                        <input type="hidden"
+                            name="items[${index}][item_id]"
+                            value="${item.item_id}">
+
+                        <input type="hidden"
+                            name="items[${index}][purchase_order_item_id]"
+                            value="${item.purchase_order_item_id}">
+
+                        <input type="hidden"
+                            name="items[${index}][tax_percentage]"
+                            class="tax_percentage"
+                            value="${tax}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label>Ordered</label>
+
+                        <input type="text"
+                            class="form-control ordered_qty"
+                            value="${item.ordered_quantity || 0}"
+                            readonly>
+
+                        <small class="text-info d-block mt-1">
+                            Remaining:
+                            <span class="remaining_qty">${remaining.toFixed(2)}</span>
+                        </small>
+
+                        <input type="hidden"
+                            class="remaining_original"
+                            value="${remaining}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label>Received</label>
+
+                        <input type="number"
+                            step="0.01"
+                            min="0"
+                            max="${remaining}"
+                            name="items[${index}][received_quantity]"
+                            class="form-control received_qty"
+                            value="${received}">
+
+                        <small class="text-danger error-text"
+                            data-error="received_quantity"></small>
+                    </div>
+
+                    <div class="col-md-1">
+                        <label>Unit</label>
+
+                        <input type="text"
+                            class="form-control"
+                            value="${item.unit_name || ''}"
+                            readonly>
+
+                        <input type="hidden"
+                            name="items[${index}][unit_id]"
+                            value="${item.unit_id}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label>Rate</label>
+
+                        <input type="number"
+                            step="0.01"
+                            name="items[${index}][rate]"
+                            class="form-control rate"
+                            value="${rate}"
+                            readonly>
+                    </div>
+
+                    <div class="col-md-1">
+                        <label>Tax %</label>
+
+                        <input type="text"
+                            class="form-control tax_display"
+                            value="${tax}"
+                            readonly>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label>Total</label>
+
+                        <input type="text"
+                            name="items[${index}][total]"
+                            class="form-control total"
+                            value="${item.total || 0}"
+                            readonly>
+                    </div>
+
+                </div>
+            </div>
+        `;
+
+            $wrapper.append(html);
+
+        });
+
+    }
 </script>
 @endsection
