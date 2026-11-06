@@ -883,9 +883,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     });
 
     function renderGrnItems($wrapper, items) {
-
+console.log('Rendering GRN items',items);
         $wrapper.html('');
-
+        items = JSON.parse(items || '[]');
+console.log(items);
         if (!items || items.length === 0) {
             $wrapper.html('<div class="alert alert-info">No items found.</div>');
             return;
