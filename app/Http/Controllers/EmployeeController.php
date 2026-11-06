@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\EmployeeDocument;
 use App\Models\Shift;
 use App\Models\User;
+use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -71,10 +72,11 @@ class EmployeeController extends Controller implements HasMiddleware
         $countries = Country::all();
         $departments = Department::where('hotel_id', auth()->user()->hotel_id)->where('status', 1)->get();
         $shifts = Shift::where('hotel_id', auth()->user()->hotel_id)->where('status', 1)->get();
+        $roles = UserRole::where('hotel_id', auth()->user()->hotel_id)->where('status', 1)->get();
 
         return view(
             'pages.employeeManagement.employee.index',
-            compact('countries', 'departments', 'shifts', 'employees')
+            compact('countries', 'departments', 'shifts', 'employees', 'roles')
         );
     }
 
