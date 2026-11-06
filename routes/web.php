@@ -257,7 +257,7 @@ Route::middleware('auth')->group(function () {
 
         //grn
         Route::resource('grn', InventoryGoodsReceiptController::class);
-        Route::get('/grn/{id}/items', [InventoryGoodsReceiptController::class, 'getItems']);
+        Route::get('/grnitems/{id}/items', [InventoryGoodsReceiptController::class, 'getItems']);
         Route::get('/vendors/{vendor}/purchase-orders', [InventoryGoodsReceiptController::class, 'getPOByVendor']);
 
         //stock

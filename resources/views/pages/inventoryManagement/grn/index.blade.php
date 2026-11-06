@@ -840,7 +840,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     '<div class="text-center p-3">Loading...</div>'
                 );
 
-                $.get("{{ url('grn') }}/" + id + "/items", function(res) {
+                $.get("{{ url('grnitems') }}/" + id + "/items", function(res) {
                     $editModal.find('.grnItemsWrapper').html(res);
                     calculateSummary();
                 });
