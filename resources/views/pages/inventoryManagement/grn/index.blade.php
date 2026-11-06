@@ -629,9 +629,25 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                 $modal.find('.discountAmount').val(res.discount || 0);
 
+                let existingItems = $modal.data('grnItems') || [];
+                let existingMap = {};
+
+                existingItems.forEach(function(item) {
+                    let key = String(item.purchase_order_item_id ?? item.item_id);
+                    existingMap[key] = item;
+                });
+
                 let index = 0;
 
                 res.items.forEach(item => {
+
+                    const existingItem = existingMap[String(item.purchase_order_item_id ?? item.item_id)] || {};
+                    const existingQty = parseFloat(existingItem.received_quantity ?? 0) || 0;
+                    const currentRemaining = Math.max((parseFloat(item.remaining_qty ?? 0) || 0) + existingQty, 0);
+                    const displayQty = existingQty > 0 ? existingQty : 0;
+                    const rate = parseFloat(existingItem.rate ?? item.rate ?? 0) || 0;
+                    const taxPercentage = parseFloat(existingItem.tax_percentage ?? item.tax_percentage ?? 0) || 0;
+                    const total = (displayQty * rate) + ((displayQty * rate * taxPercentage) / 100);
 
                     let html = `
            <div class="item-card">
@@ -642,7 +658,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <label>Item</label>
                         <input type="text" class="form-control" value="${item.name}" readonly>
                         <input type="hidden" name="items[${index}][item_id]" value="${item.item_id}">
-                        <input type="hidden" name="items[${index}][tax_percentage]" class="tax_percentage" value="${item.tax_percentage}">
+                        <input type="hidden" name="items[${index}][tax_percentage]" class="tax_percentage" value="${taxPercentage}">
                         <input type="hidden" name="items[${index}][purchase_order_item_id]" value="${item.purchase_order_item_id}">
                         <small class="text-danger error-text" data-error="item_id"></small>
                     </div>
@@ -652,9 +668,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <label>Ordered</label>
                         <input type="text" class="form-control ordered_qty" value="${item.quantity}" readonly>
                         <small class="text-info d-block mt-1">
-                Remaining: <span class="remaining_qty">${item.remaining_qty}</span>
+                Remaining: <span class="remaining_qty">${currentRemaining - displayQty}</span>
             </small>
-            <input type="hidden" class="remaining_original" value="${item.remaining_qty}">
+            <input type="hidden" class="remaining_original" value="${currentRemaining}">
                         <small class="text-danger error-text" data-error="ordered_qty"></small>
                     </div>
 
@@ -663,7 +679,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <label>Received</label>
                         <input type="number" step="0.01"
                             name="items[${index}][received_quantity]"
-                            class="form-control received_qty" max="${item.quantity}">
+                            class="form-control received_qty" max="${item.quantity}" value="${displayQty}">
 
                         <small class="text-danger error-text" data-error="received_quantity"></small>
                     </div>
@@ -682,7 +698,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <input type="number" step="0.01"
                             name="items[${index}][rate]"
                             class="form-control rate"
-                            value="${item.rate}" readonly>
+                            value="${rate}" readonly>
 
                         <small class="text-danger error-text" data-error="rate"></small>
                     </div>
@@ -691,7 +707,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <div class="col-md-1">
                         <label>Tax %</label>
                         <input type="text" class="form-control tax_display"
-                            value="${item.tax_percentage}" readonly>
+                            value="${taxPercentage}" readonly>
 
                         <small class="text-danger error-text" data-error="tax_percentage"></small>
                     </div>
@@ -699,7 +715,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     {{-- Total --}}
                     <div class="col-md-2">
                         <label>Total</label>
-                        <input type="text" class="form-control total" readonly>
+                        <input type="text" class="form-control total" value="${total.toFixed(2)}" readonly>
 
                         <small class="text-danger error-text" data-error="total"></small>
                     </div>
@@ -782,6 +798,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
         let el = $(this);
         let id = el.data('id');
+        let grnItems = el.data('items') || [];
 
         let form = $('#EditForm');
         form.attr('action', "{{ url('inventory-management/grn') }}/" + id);
