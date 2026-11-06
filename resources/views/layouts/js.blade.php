@@ -458,7 +458,7 @@
       //global toggle button 
       $(document).on('change', '.globalStatusToggle', function() {
           let checkbox = $(this);
-          let url = "{{url('toggle-status')}}";
+          let url = checkbox.data('url') || "{{ url('toggle-status') }}";
           let id = checkbox.data('id');
           let model = checkbox.data('model');
 
