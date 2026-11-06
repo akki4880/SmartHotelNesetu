@@ -790,134 +790,138 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
 
 <script>
-        $(document).on('click', '.editItemBtn', function() {
+    $(document).on('click', '.editItemBtn', function() {
 
-            let el = $(this);
-            let id = el.data('id');
+        let el = $(this);
+        let id = el.data('id');
 
-            let form = $('#EditForm');
-            let $editModal = $('#editModal');
+        let form = $('#EditForm');
+        let $editModal = $('#editModal');
 
-            form.attr('action', "{{ url('inventory-management/grn') }}/" + id);
+        form.attr('action', "{{ url('inventory-management/grn') }}/" + id);
 
-            let $vendor = $editModal.find('.vendor-select');
-            let $po = $editModal.find('.po-select');
+        let $vendor = $editModal.find('.vendor-select');
+        let $po = $editModal.find('.po-select');
 
-            let vendorId = el.attr('data-vendor_id');
-            let poId = el.attr('data-purchase_order_id');
+        let vendorId = el.attr('data-vendor_id');
+        let poId = el.attr('data-purchase_order_id');
 
-            let grnDate = el.attr('data-grn_date');
-            let invoiceDate = el.attr('data-invoice_date');
+        let grnDate = el.attr('data-grn_date');
+        let invoiceDate = el.attr('data-invoice_date');
 
-            // BASIC FIELDS
-            $editModal.find('input[name="grn_date"]').val(
-                grnDate ? grnDate.substring(0, 10) : ''
-            );
+        // BASIC FIELDS
+        $editModal.find('input[name="grn_date"]').val(
+            grnDate ? grnDate.substring(0, 10) : ''
+        );
 
-            $editModal.find('input[name="invoice_number"]').val(
-                el.attr('data-invoice_number')
-            );
+        $editModal.find('input[name="invoice_number"]').val(
+            el.attr('data-invoice_number')
+        );
 
-            $editModal.find('input[name="invoice_date"]').val(
-                invoiceDate ? invoiceDate.substring(0, 10) : ''
-            );
+        $editModal.find('input[name="invoice_date"]').val(
+            invoiceDate ? invoiceDate.substring(0, 10) : ''
+        );
 
-            $editModal.find('textarea[name="notes"]').val(
-                el.attr('data-notes')
-            );
+        $editModal.find('textarea[name="notes"]').val(
+            el.attr('data-notes')
+        );
 
-            const discountValue = parseFloat(el.attr('data-discount_amount') || 0);
-            $editModal.find('.discountAmount').val(discountValue).trigger('input');
+        const discountValue = parseFloat(el.attr('data-discount_amount') || 0);
+        $editModal.find('.discountAmount').val(discountValue).trigger('input');
 
-            // SUMMARY
-            $editModal.find('.subTotalText').text(
-                '₹ ' + (parseFloat(el.attr('data-sub_total') || 0)).toFixed(2)
-            );
+        // SUMMARY
+        $editModal.find('.subTotalText').text(
+            '₹ ' + (parseFloat(el.attr('data-sub_total') || 0)).toFixed(2)
+        );
 
-            $editModal.find('.discountText').text(
-                '₹ ' + (parseFloat(el.attr('data-discount_amount') || 0)).toFixed(2)
-            );
+        $editModal.find('.discountText').text(
+            '₹ ' + (parseFloat(el.attr('data-discount_amount') || 0)).toFixed(2)
+        );
 
-            $editModal.find('.grandTotalText').text(
-                '₹ ' + (parseFloat(el.attr('data-grand_total') || 0)).toFixed(2)
-            );
+        $editModal.find('.grandTotalText').text(
+            '₹ ' + (parseFloat(el.attr('data-grand_total') || 0)).toFixed(2)
+        );
 
-            // VENDOR
-            $vendor.val(vendorId).trigger('change');
+        // VENDOR
+        $vendor.val(vendorId).trigger('change');
 
-            // PO
-            $po.html('<option value="">Loading...</option>');
+        // PO
+        $po.html('<option value="">Loading...</option>');
 
-            // LOAD PURCHASE ORDERS
-            $.ajax({
-                url: '/inventory-management/vendors/' + vendorId + '/purchase-orders?formaction=edit',
-                type: 'GET',
+        // LOAD PURCHASE ORDERS
+        $.ajax({
+            url: '/inventory-management/vendors/' + vendorId + '/purchase-orders?formaction=edit',
+            type: 'GET',
 
-                success: function(res) {
+            success: function(res) {
 
-                    let options = '<option value="">Select PO</option>';
+                let options = '<option value="">Select PO</option>';
 
-                    res.data.forEach(function(po) {
-                        options += `
+                res.data.forEach(function(po) {
+                    options += `
                         <option value="${po.id}">
                             ${po.po_number}
                         </option>
                     `;
-                    });
+                });
 
-                    $po.html(options);
+                $po.html(options);
 
-                    // Select existing PO
-                    $po.val(poId).trigger('change');
+                // Select existing PO
+                $po.val(poId).trigger('change');
 
-                    // GET ITEMS DIRECTLY FROM EDIT BUTTON
-                    let items = el.attr('data-items');
-                    console.log(items);
-                    // Render items
-                    renderGrnItems(
-                        $editModal.find('.grnItemsWrapper'),
-                        items
-                    );
+                // GET ITEMS DIRECTLY FROM EDIT BUTTON
+                let items = el.attr('data-items');
+                console.log(items);
+                // Render items
+                renderGrnItems(
+                    $editModal.find('.grnItemsWrapper'),
+                    items
+                );
 
-                    // Show modal first so summary reads the visible edit modal discount
-                    $editModal.modal('show');
-                    setTimeout(function() {
-                        calculateSummary();
-                    }, 50);
+                // Show modal first so summary reads the visible edit modal discount
+                $editModal.modal('show');
+                setTimeout(function() {
+                    calculateSummary();
+                }, 50);
 
-                },
+            },
 
-                error: function() {
-                    toastr.error('Failed to load purchase orders');
-                }
-
-            });
+            error: function() {
+                toastr.error('Failed to load purchase orders');
+            }
 
         });
 
-        function renderGrnItems($wrapper, items) {
-            $wrapper.html('');
-            console.log('Raw items:', items);
-            items = JSON.parse(items || '[]');
-            if (!Array.isArray(items) || items.length === 0) {
-                $('.grnItemsWrapper').html(
-                    '<p class="text-center text-muted">No items found.</p>'
-                );
-                return;
-            }
-            console.log('Parsed items:', items);
-            console.log('Items count:', items.length);
-            items.forEach(function(item, index) {
+        // Make Vendor and PO readonly in Edit modal
+        $vendor.prop('disabled', true).trigger('change.select2');
+        $po.prop('disabled', true).trigger('change.select2');
 
-                let itemName = item.item_name || item.item?.name || item.name || '';
-                let orderedQty = parseFloat(item.ordered_quantity ?? item.quantity ?? item.orderedQty ?? 0) || 0;
-                let remaining = parseFloat(item.remaining_quantity ?? item.remaining_qty ?? (orderedQty - (parseFloat(item.received_quantity) || 0)) ?? 0) || 0;
-                let unitName = item.unit_name || item.unit?.short_name || item.unit?.name || '';
-                let received = parseFloat(item.received_quantity) || 0;
-                let rate = parseFloat(item.rate) || 0;
-                let tax = parseFloat(item.tax_percentage) || 0;
+    });
 
-                let html = `
+    function renderGrnItems($wrapper, items) {
+        $wrapper.html('');
+        console.log('Raw items:', items);
+        items = JSON.parse(items || '[]');
+        if (!Array.isArray(items) || items.length === 0) {
+            $('.grnItemsWrapper').html(
+                '<p class="text-center text-muted">No items found.</p>'
+            );
+            return;
+        }
+        console.log('Parsed items:', items);
+        console.log('Items count:', items.length);
+        items.forEach(function(item, index) {
+
+            let itemName = item.item_name || item.item?.name || item.name || '';
+            let orderedQty = parseFloat(item.ordered_quantity ?? item.quantity ?? item.orderedQty ?? 0) || 0;
+            let remaining = parseFloat(item.remaining_quantity ?? item.remaining_qty ?? (orderedQty - (parseFloat(item.received_quantity) || 0)) ?? 0) || 0;
+            let unitName = item.unit_name || item.unit?.short_name || item.unit?.name || '';
+            let received = parseFloat(item.received_quantity) || 0;
+            let rate = parseFloat(item.rate) || 0;
+            let tax = parseFloat(item.tax_percentage) || 0;
+
+            let html = `
                 <div class="item-card mb-3">
                     <div class="row">
 
@@ -1023,10 +1027,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                 </div>
             `;
 
-                $wrapper.append(html);
+            $wrapper.append(html);
 
-            });
+        });
 
-        }
+    }
 </script>
 @endsection
