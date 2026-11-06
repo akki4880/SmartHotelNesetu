@@ -784,36 +784,74 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         let id = el.data('id');
 
         let form = $('#EditForm');
+        let $editModal = $('#editModal');
+
         form.attr('action', "{{ url('inventory-management/grn') }}/" + id);
 
-        let $editModal = $('#editModal');
         let $vendor = $editModal.find('.vendor-select');
         let $po = $editModal.find('.po-select');
 
+        // Get values
+        let vendorId = el.attr('data-vendor_id');
+        let poId = el.attr('data-purchase_order_id');
+
+        let grnDate = el.attr('data-grn_date');
+        let invoiceDate = el.attr('data-invoice_date');
+
         // BASIC FIELDS
-        $vendor.val(el.data('vendor_id')).trigger('change');
-        $po.val(el.data('purchase_order_id')).trigger('change');
+        $editModal.find('input[name="grn_date"]').val(grnDate);
+        $editModal.find('input[name="invoice_number"]').val(el.attr('data-invoice_number'));
+        $editModal.find('input[name="invoice_date"]').val(invoiceDate);
 
-        $editModal.find('input[name="grn_date"]').val(el.data('grn_date'));
-        $editModal.find('input[name="invoice_number"]').val(el.data('invoice_number'));
-        $editModal.find('input[name="invoice_date"]').val(el.data('invoice_date'));
+        $editModal.find('textarea[name="notes"]').val(el.attr('data-notes'));
 
-        $editModal.find('textarea[name="notes"]').val(el.data('notes'));
-        $editModal.find('.discountAmount').val(el.data('discount_amount'));
+        $editModal.find('.discountAmount').val(el.attr('data-discount_amount'));
 
         // SUMMARY
-        $editModal.find('.subTotalText').text('₹ ' + (el.data('sub_total') ?? '0.00'));
-        $editModal.find('.discountText').text('₹ ' + (el.data('discount_amount') ?? '0.00'));
-        $editModal.find('.grandTotalText').text('₹ ' + (el.data('grand_total') ?? '0.00'));
+        $editModal.find('.subTotalText').text('₹ ' + (el.attr('data-sub_total') || '0.00'));
+        $editModal.find('.discountText').text('₹ ' + (el.attr('data-discount_amount') || '0.00'));
+        $editModal.find('.grandTotalText').text('₹ ' + (el.attr('data-grand_total') || '0.00'));
 
-        // 🔥 LOAD ITEMS (BEST PART)
-        $editModal.find('.grnItemsWrapper').html('<div class="text-center p-3">Loading...</div>');
+        // Set vendor
+        $vendor.val(vendorId).trigger('change.select2');
 
-        $.get("{{ url('grn') }}/" + id + "/items", function(res) {
-            $editModal.find('.grnItemsWrapper').html(res);
+        // Reset PO dropdown
+        $po.html('<option value="">Loading...</option>').trigger('change');
+
+        // Load vendor purchase orders
+        $.ajax({
+            url: '/inventory-management/vendors/' + vendorId + '/purchase-orders?formaction=edit',
+            type: 'GET',
+            success: function(res) {
+
+                let options = '<option value="">Select PO</option>';
+
+                res.data.forEach(po => {
+                    options += `<option value="${po.id}">${po.po_number}</option>`;
+                });
+
+                $po.html(options);
+
+                // Select existing PO AFTER options are loaded
+                $po.val(poId).trigger('change.select2');
+
+                // Load existing GRN items
+                $editModal.find('.grnItemsWrapper').html(
+                    '<div class="text-center p-3">Loading...</div>'
+                );
+
+                $.get("{{ url('grn') }}/" + id + "/items", function(res) {
+                    $editModal.find('.grnItemsWrapper').html(res);
+                    calculateSummary();
+                });
+
+                $editModal.modal('show');
+            },
+            error: function() {
+                toastr.error('Failed to load purchase orders');
+            }
         });
 
-        $editModal.modal('show');
     });
 </script>
 @endsection

@@ -524,10 +524,23 @@ class InventoryGoodsReceiptController extends Controller implements HasMiddlewar
 
     public function getPOByVendor($vendorId)
     {
+        if(request()->query('formaction') === 'edit') {
+            $pos = InventoryPurchaseOrder::where('vendor_id', $vendorId)
+                ->whereIn('status', ['approved', 'sent', 'partially_received','completed'])
+                ->select('id', 'po_number')
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'data' => $pos
+            ]);
+        }
+
         $pos = InventoryPurchaseOrder::where('vendor_id', $vendorId)
             ->whereIn('status', ['approved', 'sent', 'partially_received'])
             ->select('id', 'po_number')
             ->get();
+        
 
         return response()->json([
             'status' => true,
