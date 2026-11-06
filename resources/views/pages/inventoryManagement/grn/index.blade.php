@@ -790,21 +790,21 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         let $vendor = $editModal.find('.vendor-select');
         let $po = $editModal.find('.po-select');
 
-        // BASIC FIELDS
-        $vendor.val(el.data('vendor_id')).trigger('change');
-        $po.val(el.data('purchase_order_id')).trigger('change');
+        // BASIC FIELDS - jQuery converts data-* attributes to camelCase
+        $vendor.val(el.data('vendorId')).trigger('change');
+        $po.val(el.data('purchaseOrderId')).trigger('change');
 
-        $editModal.find('input[name="grn_date"]').val(el.data('grn_date'));
-        $editModal.find('input[name="invoice_number"]').val(el.data('invoice_number'));
-        $editModal.find('input[name="invoice_date"]').val(el.data('invoice_date'));
+        $editModal.find('input[name="grn_date"]').val(el.data('grnDate'));
+        $editModal.find('input[name="invoice_number"]').val(el.data('invoiceNumber'));
+        $editModal.find('input[name="invoice_date"]').val(el.data('invoiceDate'));
 
         $editModal.find('textarea[name="notes"]').val(el.data('notes'));
-        $editModal.find('.discountAmount').val(el.data('discount_amount'));
+        $editModal.find('.discountAmount').val(el.data('discountAmount'));
 
         // SUMMARY
-        $editModal.find('.subTotalText').text('₹ ' + (el.data('sub_total') ?? '0.00'));
-        $editModal.find('.discountText').text('₹ ' + (el.data('discount_amount') ?? '0.00'));
-        $editModal.find('.grandTotalText').text('₹ ' + (el.data('grand_total') ?? '0.00'));
+        $editModal.find('.subTotalText').text('₹ ' + (el.data('subTotal') ?? '0.00'));
+        $editModal.find('.discountText').text('₹ ' + (el.data('discountAmount') ?? '0.00'));
+        $editModal.find('.grandTotalText').text('₹ ' + (el.data('grandTotal') ?? '0.00'));
 
         // 🔥 LOAD ITEMS (BEST PART)
         $editModal.find('.grnItemsWrapper').html('<div class="text-center p-3">Loading...</div>');
