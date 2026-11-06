@@ -53,6 +53,59 @@ class DashboardController extends Controller implements HasMiddleware
             $availableRooms = max(0, $totalRooms - $occupiedRooms);
             $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 1) : 0;
 
+            $roomTypeBreakdown = \App\Models\RoomType::where('hotel_id', $hotelId)
+                ->withCount('roomNumbers')
+                ->get()
+                ->map(function ($roomType, $index) use ($occupancyRate) {
+                    $total = (int) $roomType->room_numbers_count;
+                    $occupied = $total > 0 ? (int) round(($total * $occupancyRate) / 100) : 0;
+                    $occupied = min($total, max(0, $occupied));
+                    $available = $total - $occupied;
+
+                    return [
+                        'name' => $roomType->name,
+                        'total' => $total,
+                        'occupied' => $occupied,
+                        'available' => $available,
+                        'percent' => $total > 0 ? round(($occupied / $total) * 100) : 0,
+                        'color' => ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#06b6d4', '#ec4899'][$index % 6],
+                    ];
+                })
+                ->take(4)
+                ->values();
+
+            $currentMonth = now()->month;
+            $currentYear = now()->year;
+            $currentMonthRevenue = (float) Booking::where('hotel_id', $hotelId)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->sum('total_amount');
+
+            $previousMonthDate = now()->copy()->subMonth();
+            $previousMonthRevenue = (float) Booking::where('hotel_id', $hotelId)
+                ->whereMonth('created_at', $previousMonthDate->month)
+                ->whereYear('created_at', $previousMonthDate->year)
+                ->sum('total_amount');
+
+            $revenueData = [
+                'current_month_total' => $currentMonthRevenue,
+                'previous_month_total' => $previousMonthRevenue,
+                'change_percent' => $previousMonthRevenue > 0
+                    ? round((($currentMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100, 1)
+                    : 0,
+                'monthly' => collect(range(1, 12))->map(function ($month) use ($hotelId, $currentYear) {
+                    $monthDate = now()->setDate($currentYear, $month, 1);
+
+                    return [
+                        'month' => $monthDate->shortMonthName,
+                        'value' => (float) Booking::where('hotel_id', $hotelId)
+                            ->whereMonth('created_at', $month)
+                            ->whereYear('created_at', $currentYear)
+                            ->sum('total_amount'),
+                    ];
+                })->values()->all(),
+            ];
+
             $stats = [
                 'new_bookings_today' => Booking::where('hotel_id', $hotelId)
                     ->whereDate('created_at', today())
@@ -61,9 +114,7 @@ class DashboardController extends Controller implements HasMiddleware
                     ->whereDate('check_in_date', today())
                     ->count(),
                 'total_customers' => Guest::where('hotel_id', $hotelId)->count(),
-                'revenue_this_month' => (float) Booking::where('hotel_id', $hotelId)
-                    ->whereMonth('created_at', now()->month)
-                    ->sum('total_amount'),
+                'revenue_this_month' => $currentMonthRevenue,
                 'available_rooms' => $availableRooms,
                 'occupied_rooms' => $occupiedRooms,
                 'check_ins_today' => Booking::where('hotel_id', $hotelId)
@@ -85,7 +136,7 @@ class DashboardController extends Controller implements HasMiddleware
                 ->take(5)
                 ->get();
 
-            return view('dashboard', compact('stats', 'recentBookings', 'customers', 'totalRooms', 'occupancyRate'));
+            return view('dashboard', compact('stats', 'revenueData', 'recentBookings', 'customers', 'totalRooms', 'occupancyRate', 'roomTypeBreakdown'));
         } else {
             $totalHotels = Hotel::count();
             return view('dashboard', compact('totalHotels'));

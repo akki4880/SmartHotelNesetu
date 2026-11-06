@@ -2,6 +2,15 @@
 
 @section('title', 'Welcome')
 
+@php
+    $revenueSummary = $revenueData ?? [];
+    $currentRevenue = (float) ($revenueSummary['current_month_total'] ?? 0);
+    $previousRevenue = (float) ($revenueSummary['previous_month_total'] ?? 0);
+    $revenueDelta = $previousRevenue > 0 ? (($currentRevenue - $previousRevenue) / $previousRevenue) * 100 : 0;
+    $monthlyRevenueValues = collect($revenueSummary['monthly'] ?? [])->pluck('value')->all();
+    $maxRevenueValue = !empty($monthlyRevenueValues) ? max($monthlyRevenueValues) : 0;
+@endphp
+
 @section('content') 
 <!-- ====== STAT CARDS ROW ====== -->
 <div class="row gy-3  ">
@@ -91,7 +100,7 @@
 <div class="row g-3 mb-4">
 
     <!-- Revenue Analytics -->
-    <div class="col-lg-7">
+    <div class="col-lg-12">
         <div class="sh-card mb-4">
             <div class="card-head">
                 <h6><i class="bi bi-bar-chart-line"></i> Revenue Analytics</h6>
@@ -114,44 +123,28 @@
                     <div class="col-sm-4">
                         <div style="padding:.875rem;background:var(--sh-bg);border-radius:10px">
                             <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--sh-text-muted);margin-bottom:.25rem">Room Revenue</div>
-                            <div style="font-size:1.25rem;font-weight:800;color:var(--sh-text)">₹2,84,500</div>
-                            <div style="font-size:.72rem;color:#10b981;font-weight:600"><i class="bi bi-arrow-up-short"></i> +18% vs last month</div>
-                        </div>
-                    </div>
-                    <div class="col-sm-4">
-                        <div style="padding:.875rem;background:var(--sh-bg);border-radius:10px">
-                            <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--sh-text-muted);margin-bottom:.25rem">F&amp;B Revenue</div>
-                            <div style="font-size:1.25rem;font-weight:800;color:var(--sh-text)">₹96,300</div>
-                            <div style="font-size:.72rem;color:#10b981;font-weight:600"><i class="bi bi-arrow-up-short"></i> +31% vs last month</div>
-                        </div>
-                    </div>
-                    <div class="col-sm-4">
-                        <div style="padding:.875rem;background:var(--sh-bg);border-radius:10px">
-                            <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--sh-text-muted);margin-bottom:.25rem">Other Revenue</div>
-                            <div style="font-size:1.25rem;font-weight:800;color:var(--sh-text)">₹39,200</div>
-                            <div style="font-size:.72rem;color:#ef4444;font-weight:600"><i class="bi bi-arrow-down-short"></i> -4% vs last month</div>
+                            <div style="font-size:1.25rem;font-weight:800;color:var(--sh-text)">₹{{ number_format($currentRevenue, 2) }}</div>
+                            <div style="font-size:.72rem;color:{{ $revenueDelta >= 0 ? '#10b981' : '#ef4444' }};font-weight:600">
+                                <i class="bi {{ $revenueDelta >= 0 ? 'bi-arrow-up-short' : 'bi-arrow-down-short' }}"></i>
+                                {{ $revenueDelta >= 0 ? '+' : '-' }}{{ number_format(abs($revenueDelta), 1) }}% vs last month
+                            </div>
                         </div>
                     </div>
                 </div>
                 <!-- Bar Chart -->
                 <div class="rev-bar-wrap">
-                    <div class="rev-bar" style="height:45%" data-val="85,000"></div>
-                    <div class="rev-bar" style="height:62%" data-val="1,10,000"></div>
-                    <div class="rev-bar" style="height:55%" data-val="98,500"></div>
-                    <div class="rev-bar" style="height:78%" data-val="1,40,000"></div>
-                    <div class="rev-bar" style="height:48%" data-val="88,000"></div>
-                    <div class="rev-bar" style="height:65%" data-val="1,18,500"></div>
-                    <div class="rev-bar" style="height:72%" data-val="1,30,000"></div>
-                    <div class="rev-bar active" style="height:88%" data-val="1,58,000"></div>
-                    <div class="rev-bar" style="height:80%" data-val="1,44,500"></div>
-                    <div class="rev-bar" style="height:70%" data-val="1,26,000"></div>
-                    <div class="rev-bar" style="height:60%" data-val="1,08,000"></div>
-                    <div class="rev-bar" style="height:92%" data-val="1,65,000"></div>
+                    @foreach(($revenueSummary['monthly'] ?? []) as $monthRevenue)
+                        @php
+                            $barHeight = $maxRevenueValue > 0 ? (($monthRevenue['value'] / $maxRevenueValue) * 100) : 0;
+                            $barHeight = $monthRevenue['value'] > 0 ? max(10, $barHeight) : 0;
+                        @endphp
+                        <div class="rev-bar {{ $loop->iteration === now()->month ? 'active' : '' }}" style="height:{{ $barHeight }}%" data-val="₹{{ number_format((float) $monthRevenue['value'], 2) }}"></div>
+                    @endforeach
                 </div>
                 <div class="rev-labels">
-                    <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span>
-                    <span>May</span><span>Jun</span><span>Jul</span><span>Aug</span>
-                    <span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+                    @foreach(($revenueSummary['monthly'] ?? []) as $monthRevenue)
+                        <span>{{ $monthRevenue['month'] }}</span>
+                    @endforeach
                 </div>
                 <div class="rev-legend mt-3">
                     <div class="rev-legend-item">
@@ -166,16 +159,68 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> 
+</div>
 
-    <!-- Room Availability -->
+<!-- ====== ROW: Quick Actions + Hotel Performance ====== -->
+<div class="row g-3 mb-4">
+    <!-- Quick Actions -->
     <div class="col-lg-5">
-        <!-- QUick  -->
-        <div class="sh-card">
+        <div class="sh-card h-100">
             <div class="card-head">
-                <h6><i class="bi bi-lightning-charge"></i> Quick Actions</h6>
+                <h6><i class="bi bi-door-open"></i> Room Availability</h6>
+                <span style="font-size:.72rem;font-weight:600;color:#10b981">Today</span>
             </div>
             <div class="card-body-pad">
+                <!-- Overall -->
+                <div class="text-center mb-3 p-3 rounded-3" style="background:var(--sh-bg)">
+                    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--sh-text-muted)">Overall Occupancy</div>
+                    <div style="font-size:2.25rem;font-weight:800;color:var(--sh-primary);line-height:1.1;margin:.25rem 0">{{ $occupancyRate }}%</div>
+                    <div class="progress" style="height:8px">
+                        <div class="progress-bar bg-primary" style="width:{{ $occupancyRate }}%"></div>
+                    </div>
+                    <div style="font-size:.72rem;color:var(--sh-text-muted);margin-top:.375rem">{{ $stats['occupied_rooms'] }} occupied / {{ $totalRooms }} total rooms</div>
+                </div>
+                <!-- Room Types -->
+                @foreach(($roomTypeBreakdown ?? []) as $roomType)
+                    <div class="room-type-row">
+                        <div class="room-type-icon" style="background:rgba(59,130,246,.1);color:{{ $loop->index % 2 === 0 ? '#3b82f6' : '#8b5cf6' }}"><i class="bi {{ $loop->index === 0 ? 'bi-star' : ($loop->index === 1 ? 'bi-gem' : ($loop->index === 2 ? 'bi-house' : 'bi-grid')) }}"></i></div>
+                        <div class="room-type-info">
+                            <div class="room-type-name">{{ $roomType['name'] }}</div>
+                            <div class="room-type-count">{{ $roomType['occupied'] }}/{{ $roomType['total'] }} occupied</div>
+                        </div>
+                        <div class="room-type-bar">
+                            <div class="progress">
+                                <div class="progress-bar" style="width:{{ $roomType['percent'] }}%;background:{{ $loop->index % 2 === 0 ? '#3b82f6' : '#8b5cf6' }}"></div>
+                            </div>
+                        </div>
+                        <div class="room-type-pct">{{ $roomType['percent'] }}%</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>   
+    <!-- Room Availability -->
+    <div class="col-lg-7">
+        <div class="sh-card">
+            <div class="card-head">
+                <h6><i class="bi bi-lightning-charge"></i> Room Availability</h6>
+            </div>
+            <div class="card-body-pad">
+                <div class="mb-3 p-3 rounded-3" style="background:var(--sh-bg)">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--sh-text-muted)">Occupancy Today</span>
+                        <span style="font-size:1.1rem;font-weight:800;color:var(--sh-primary)">{{ $occupancyRate }}%</span>
+                    </div>
+                    <div class="progress" style="height:8px">
+                        <div class="progress-bar bg-primary" style="width:{{ $occupancyRate }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2" style="font-size:.72rem;color:var(--sh-text-muted)">
+                        <span>{{ $stats['occupied_rooms'] }} occupied</span>
+                        <span>{{ $stats['available_rooms'] }} available</span>
+                    </div>
+                </div>
+
                 <div class="row g-2">
                     <div class="col-4 mb-3">
                         <div class="quick-action-btn" data-bs-toggle="modal" data-bs-target="#newBookingModal">
@@ -230,204 +275,6 @@
                             <div class="qa-icon"><i class="bi bi-tools"></i></div>
                             <span class="qa-label">Maintenance</span>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ====== ROW: Quick Actions + Hotel Performance ====== -->
-<div class="row g-3 mb-4">
-    <!-- Quick Actions -->
-    <div class="col-lg-4">
-        <div class="sh-card h-100">
-            <div class="card-head">
-                <h6><i class="bi bi-door-open"></i> Room Availability</h6>
-                <span style="font-size:.72rem;font-weight:600;color:#10b981">Today</span>
-            </div>
-            <div class="card-body-pad">
-                <!-- Overall -->
-                <div class="text-center mb-3 p-3 rounded-3" style="background:var(--sh-bg)">
-                    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--sh-text-muted)">Overall Occupancy</div>
-                    <div style="font-size:2.25rem;font-weight:800;color:var(--sh-primary);line-height:1.1;margin:.25rem 0">82.6%</div>
-                    <div class="progress" style="height:8px">
-                        <div class="progress-bar bg-primary" style="width:82.6%"></div>
-                    </div>
-                    <div style="font-size:.72rem;color:var(--sh-text-muted);margin-top:.375rem">124 occupied / 150 total rooms</div>
-                </div>
-                <!-- Room Types -->
-                <div class="room-type-row">
-                    <div class="room-type-icon" style="background:rgba(59,130,246,.1);color:#3b82f6"><i class="bi bi-star"></i></div>
-                    <div class="room-type-info">
-                        <div class="room-type-name">Deluxe Rooms</div>
-                        <div class="room-type-count">38/45 occupied</div>
-                    </div>
-                    <div class="room-type-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:84%;background:#3b82f6"></div>
-                        </div>
-                    </div>
-                    <div class="room-type-pct">84%</div>
-                </div>
-                <div class="room-type-row">
-                    <div class="room-type-icon" style="background:rgba(139,92,246,.1);color:#8b5cf6"><i class="bi bi-gem"></i></div>
-                    <div class="room-type-info">
-                        <div class="room-type-name">Suite Rooms</div>
-                        <div class="room-type-count">18/20 occupied</div>
-                    </div>
-                    <div class="room-type-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:90%;background:#8b5cf6"></div>
-                        </div>
-                    </div>
-                    <div class="room-type-pct">90%</div>
-                </div>
-                <div class="room-type-row">
-                    <div class="room-type-icon" style="background:rgba(16,185,129,.1);color:#10b981"><i class="bi bi-house"></i></div>
-                    <div class="room-type-info">
-                        <div class="room-type-name">Standard Rooms</div>
-                        <div class="room-type-count">52/65 occupied</div>
-                    </div>
-                    <div class="room-type-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:80%;background:#10b981"></div>
-                        </div>
-                    </div>
-                    <div class="room-type-pct">80%</div>
-                </div>
-                <div class="room-type-row">
-                    <div class="room-type-icon" style="background:rgba(245,158,11,.1);color:#f59e0b"><i class="bi bi-grid"></i></div>
-                    <div class="room-type-info">
-                        <div class="room-type-name">Family Rooms</div>
-                        <div class="room-type-count">16/20 occupied</div>
-                    </div>
-                    <div class="room-type-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:80%;background:#f59e0b"></div>
-                        </div>
-                    </div>
-                    <div class="room-type-pct">80%</div>
-                </div>
-            </div>
-        </div>
-    </div> 
-    <!-- Hotel Performance Summary -->
-    <div class="col-lg-4">
-        <div class="sh-card">
-            <div class="card-head">
-                <h6><i class="bi bi-trophy"></i> Hotel Performance</h6>
-                <span style="font-size:.72rem;font-weight:600;color:var(--sh-text-muted)">This Month</span>
-            </div>
-            <div class="card-body-pad">
-                <div class="metric-row">
-                    <div class="metric-label">Average Occupancy</div>
-                    <div class="metric-bar">
-                        <div class="progress">
-                            <div class="progress-bar bg-primary" style="width:82%"></div>
-                        </div>
-                    </div>
-                    <div class="metric-val">82%</div>
-                </div>
-                <div class="metric-row">
-                    <div class="metric-label">RevPAR</div>
-                    <div class="metric-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:74%;background:#10b981"></div>
-                        </div>
-                    </div>
-                    <div class="metric-val" style="color:#10b981">74%</div>
-                </div>
-                <div class="metric-row">
-                    <div class="metric-label">Guest Satisfaction</div>
-                    <div class="metric-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:94%;background:#8b5cf6"></div>
-                        </div>
-                    </div>
-                    <div class="metric-val" style="color:#8b5cf6">94%</div>
-                </div>
-                <div class="metric-row">
-                    <div class="metric-label">Staff Performance</div>
-                    <div class="metric-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:88%;background:#f59e0b"></div>
-                        </div>
-                    </div>
-                    <div class="metric-val" style="color:#f59e0b">88%</div>
-                </div>
-                <div class="metric-row">
-                    <div class="metric-label">Restaurant Utilization</div>
-                    <div class="metric-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:67%;background:#06b6d4"></div>
-                        </div>
-                    </div>
-                    <div class="metric-val" style="color:#06b6d4">67%</div>
-                </div>
-                <div class="metric-row">
-                    <div class="metric-label">Repeat Guests</div>
-                    <div class="metric-bar">
-                        <div class="progress">
-                            <div class="progress-bar" style="width:42%;background:#ec4899"></div>
-                        </div>
-                    </div>
-                    <div class="metric-val" style="color:#ec4899">42%</div>
-                </div>
-                <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
-                    <span style="font-size:.75rem;color:var(--sh-text-muted)">Overall Score</span>
-                    <span style="font-size:1.25rem;font-weight:800;color:var(--sh-primary)">A+ <small style="font-size:.7rem;font-weight:600;color:#10b981">Excellent</small></span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Latest Notifications -->
-    <div class="col-lg-4">
-        <div class="sh-card">
-            <div class="card-head">
-                <h6><i class="bi bi-bell"></i> Latest Notifications</h6>
-                <button class="btn-sh btn-sh-ghost btn-sh-sm">View All</button>
-            </div>
-            <div class="card-body-pad">
-                <div class="notif-item">
-                    <div class="notif-icon" style="background:rgba(16,185,129,.1)"><i class="bi bi-calendar-check" style="color:#10b981"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-title">New Booking Confirmed</div>
-                        <div class="notif-msg">Priya Nair — Deluxe Room 204, 3 nights</div>
-                        <div class="notif-time"><i class="bi bi-clock" style="font-size:.65rem"></i> 2 min ago</div>
-                    </div>
-                </div>
-                <div class="notif-item">
-                    <div class="notif-icon" style="background:rgba(245,158,11,.1)"><i class="bi bi-wrench" style="color:#f59e0b"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-title">Maintenance Request</div>
-                        <div class="notif-msg">Room 302 — AC malfunction reported</div>
-                        <div class="notif-time"><i class="bi bi-clock" style="font-size:.65rem"></i> 15 min ago</div>
-                    </div>
-                </div>
-                <div class="notif-item">
-                    <div class="notif-icon" style="background:rgba(29,78,216,.1)"><i class="bi bi-box-arrow-in-right" style="color:var(--sh-primary)"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-title">Check-in Completed</div>
-                        <div class="notif-msg">Mohammed Ali — Suite 501</div>
-                        <div class="notif-time"><i class="bi bi-clock" style="font-size:.65rem"></i> 1 hr ago</div>
-                    </div>
-                </div>
-                <div class="notif-item">
-                    <div class="notif-icon" style="background:rgba(139,92,246,.1)"><i class="bi bi-currency-rupee" style="color:#8b5cf6"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-title">Payment Received</div>
-                        <div class="notif-msg">₹12,500 — Ananya Pillai, Room 118</div>
-                        <div class="notif-time"><i class="bi bi-clock" style="font-size:.65rem"></i> 3 hr ago</div>
-                    </div>
-                </div>
-                <div class="notif-item">
-                    <div class="notif-icon" style="background:rgba(239,68,68,.1)"><i class="bi bi-x-circle" style="color:#ef4444"></i></div>
-                    <div class="notif-body">
-                        <div class="notif-title">Booking Cancelled</div>
-                        <div class="notif-msg">Vikram Singh — Room 115, Full refund</div>
-                        <div class="notif-time"><i class="bi bi-clock" style="font-size:.65rem"></i> 5 hr ago</div>
                     </div>
                 </div>
             </div>
