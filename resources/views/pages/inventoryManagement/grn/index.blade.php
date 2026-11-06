@@ -148,21 +148,21 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                         data-sub_total="{{ $grn->sub_total }}"
                                         data-grand_total="{{ $grn->grand_total }}"
                                         data-items='@json($grn->items->map(function ($item) {
-    return [
-        "item_id" => $item->item_id,
-        "item_name" => $item->item->name ?? "",
-        "purchase_order_item_id" => $item->purchase_order_item_id,
-        "unit_id" => $item->unit_id,
-        "unit_name" => $item->unit->name ?? "",
-        "ordered_quantity" => $item->purchaseOrderItem->quantity ?? 0,
-        "remaining_quantity" => ($item->purchaseOrderItem->quantity ?? 0) - $item->received_quantity,
-        "received_quantity" => $item->received_quantity,
-        "rate" => $item->rate,
-        "tax_percentage" => $item->tax_percentage,
-        "tax_amount" => $item->tax_amount,
-        "total" => $item->total
-    ];
-})'>
+                                            return [
+                                                "item_id" => $item->item_id,
+                                                "item_name" => $item->item->name ?? "",
+                                                "purchase_order_item_id" => $item->purchase_order_item_id,
+                                                "unit_id" => $item->unit_id,
+                                                "unit_name" => $item->unit->name ?? "",
+                                                "ordered_quantity" => $item->purchaseOrderItem->quantity ?? 0,
+                                                "remaining_quantity" => ($item->purchaseOrderItem->quantity ?? 0) - $item->received_quantity,
+                                                "received_quantity" => $item->received_quantity,
+                                                "rate" => $item->rate,
+                                                "tax_percentage" => $item->tax_percentage,
+                                                "tax_amount" => $item->tax_amount,
+                                                "total" => $item->total
+                                            ];
+                                        })'>
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     @endif
