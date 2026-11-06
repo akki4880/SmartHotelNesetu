@@ -107,7 +107,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
-                                @if(auth()->user()->hasPermission('leaves', 'view') || auth()->user()->hasPermission('leaves', 'edit'))
+                                @if(auth()->user()->hasPermission('leaves', 'view') || auth()->user()->hasPermission('leaves', 'edit') || auth()->user()->hasPermission('leaves', 'approve') || auth()->user()->hasPermission('leaves', 'reject') || auth()->user()->hasPermission('leaves', 'delete'))
                                 <th>Action</th>@endif
                                 <th>Sr</th>
                                 <th>Employee</th>
@@ -124,7 +124,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($leaves as $index => $leave)
                             <tr>
-                                @if(auth()->user()->hasPermission('leaves', 'view') || auth()->user()->hasPermission('leaves', 'edit'))
+                                @if(auth()->user()->hasPermission('leaves', 'view') || auth()->user()->hasPermission('leaves', 'edit') || auth()->user()->hasPermission('leaves', 'approve') || auth()->user()->hasPermission('leaves', 'reject') || auth()->user()->hasPermission('leaves', 'delete'))
                                 <td>
                                     <div class="d-flex align-items-center">
                                         @if(auth()->user()->hasPermission('leaves', 'view'))
@@ -134,14 +134,16 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             <i class="fa fa-eye"></i>
                                         </button>
                                         @endif
-                                        @if(auth()->user()->hasPermission('leaves', 'edit'))
                                         @if($leave->status === 'pending')
+                                        @if(auth()->user()->hasPermission('leaves', 'edit'))
                                         <button
                                             class="btn btn-outline-success btn-icon btn-sm edit-btn mx-1"
                                             data-id="{{ $leave->id }}"
                                             title="Edit">
                                             <i class="fa fa-edit"></i>
                                         </button>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('leaves', 'delete'))
                                         <button
                                             class="btn one-btn-outline-danger btn-icon btn-sm delete-btn mx-1"
                                             data-id="{{ $leave->id }}"
@@ -151,6 +153,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             title="Delete">
                                             <i class="fa fa-trash"></i>
                                         </button>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('leaves', 'approve'))
                                         <button
                                             class="btn btn-outline-success btn-icon btn-sm mx-1 approve-btn"
                                             data-id="{{ $leave->id }}"
@@ -160,6 +164,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             title="Approve">
                                             <i class="fa fa-check"></i>
                                         </button>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('leaves', 'reject'))
                                         <button
                                             class="btn btn-outline-danger btn-icon btn-sm mx-1 reject-btn"
                                             data-id="{{ $leave->id }}"
