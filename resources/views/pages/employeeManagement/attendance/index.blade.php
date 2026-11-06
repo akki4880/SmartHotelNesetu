@@ -29,11 +29,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <select name="employee_id" class="form-control">
                                     <option value="">All Employees</option>
                                     @foreach($employees as $employee)
-                                        <option value="{{ $employee->id }}" {{ request('employee_id') == $employee->id ? 'selected' : '' }}>
-                                            {{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_code }})
-                                        </option>
+                                    <option value="{{ $employee->id }}" {{ request('employee_id') == $employee->id ? 'selected' : '' }}>
+                                        {{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_code }})
+                                    </option>
                                     @endforeach
-                                    
+
                                 </select>
                             </div>
                         </div>
@@ -90,7 +90,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <a href="{{ route('check-attendances') }}" class="btn btn-primary btn-sm btn-loader"><i
                             class="fa-solid fa-plus"></i>
                         Check Attendance</a>
-                    @if(auth()->user()->hasPermission('attendances', 'create'))
+                    @if(auth()->user()->hasPermission('attendance', 'create'))
                     <button class="btn btn-danger btn-sm btn-loader" data-toggle="modal" data-target="#createModal"><i
                             class="fa-solid fa-plus"></i>
                         Create</button>
@@ -107,7 +107,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
-                                @if(auth()->user()->hasPermission('attendances', 'view') || auth()->user()->hasPermission('attendances', 'edit'))
+                                @if(auth()->user()->hasPermission('attendance', 'view') || auth()->user()->hasPermission('attendance', 'edit') || auth()->user()->hasPermission('attendance', 'delete'))
                                 <th>Action</th>@endif
                                 <th>Sr</th>
                                 <th>Employee</th>
@@ -122,22 +122,24 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($attendances as $index => $attendance)
                             <tr>
-                                @if(auth()->user()->hasPermission('attendances', 'view') || auth()->user()->hasPermission('attendances', 'edit'))
+                                @if(auth()->user()->hasPermission('attendance', 'view') || auth()->user()->hasPermission('attendance', 'edit') || auth()->user()->hasPermission('attendance', 'delete'))
                                 <td>
-                                    @if(auth()->user()->hasPermission('attendances', 'view'))
-                                    <button 
+                                    @if(auth()->user()->hasPermission('attendance', 'view'))
+                                    <button
                                         class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader"
                                         data-url="{{ route('attendances.show', $attendance->id) }}" title="View">
                                         <i class="fa fa-eye"></i>
                                     </button>
                                     @endif
-                                    @if(auth()->user()->hasPermission('attendances', 'edit'))
-                                    <a href="javascript:void(0);" 
+                                    @if(auth()->user()->hasPermission('attendance', 'edit'))
+                                    <a href="javascript:void(0);"
                                         class="btn one-btn-outline-success btn-icon btn-sm editAttendanceBtn btn-loader"
                                         data-id="{{ $attendance->id }}" title="Edit">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
-                                    <button 
+                                    @endif
+                                    @if(auth()->user()->hasPermission('attendance', 'delete'))
+                                    <button
                                         class="btn btn-outline-danger btn-icon btn-sm delete-btn"
                                         data-id="{{ $attendance->id }}" data-url="{{ route('attendances.destroy', $attendance->id) }}" title="Delete">
                                         <i class="fa fa-trash"></i>
@@ -192,12 +194,12 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <div class="col-4 mt-2">
                             <!-- Employee -->
                             <div class="form-group">
-                                <label>Employee  </label>
+                                <label>Employee </label>
                                 <select name="employee_id" class="form-control" required>
                                     <option value="">Select Employee</option>
                                     @foreach($employees as $employee)
                                     <option value="{{ $employee->id }}">
-                                    {{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_code }})
+                                        {{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_code }})
                                     </option>
                                     @endforeach
                                 </select>
@@ -211,7 +213,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <select name="shift_id" class="form-control">
                                     <option value="">Select Shift</option>
                                     @foreach($shifts as $shift)
-                                        <option value="{{ $shift->id }}">{{ $shift->name }}</option>
+                                    <option value="{{ $shift->id }}">{{ $shift->name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-danger error-text" data-error="shift_id"></small>
@@ -323,7 +325,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <select id="edit_employee_id" name="employee_id" class="form-control" required>
                                     <option value="">Select Employee</option>
                                     @foreach($employees as $employee)
-                                        <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_code }})</option>
+                                    <option value="{{ $employee->id }}">{{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_code }})</option>
                                     @endforeach
                                 </select>
                                 <small class="text-danger error-text" data-error="employee_id"></small>
@@ -336,7 +338,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <select id="edit_shift_id" name="shift_id" class="form-control">
                                     <option value="">Select Shift</option>
                                     @foreach($shifts as $shift)
-                                        <option value="{{ $shift->id }}">{{ $shift->name }}</option>
+                                    <option value="{{ $shift->id }}">{{ $shift->name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-danger error-text" data-error="shift_id"></small>
@@ -442,7 +444,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             $('#edit_attendance_date').val(data.attendance_date ? data.attendance_date.split('T')[0] : '');
             $('#edit_status').val(data.status);
             $('#edit_check_in').val(data.check_in ? data.check_in.split('T')[1].substring(0, 5) : '');
-            $('#edit_check_out').val( data.check_out ? data.check_out.split('T')[1].substring(0, 5) : '');
+            $('#edit_check_out').val(data.check_out ? data.check_out.split('T')[1].substring(0, 5) : '');
             $('#edit_working_hours').val(data.working_hours);
             $('#edit_overtime_hours').val(data.overtime_hours);
             $('#edit_late_minutes').val(data.late_minutes);
@@ -450,7 +452,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
             // Change action dynamically
             $('#EditForm').attr('action', '/employee-management/attendances/' + attendanceId);
-            
+
             // Show the edit modal
             $('#editModal').modal('show');
         });

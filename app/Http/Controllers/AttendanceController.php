@@ -19,9 +19,9 @@ class AttendanceController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:attendance_records,view', only: ['index', 'show']),
-            new Middleware('permission:attendance_records,create', only: ['create', 'store']),
-            new Middleware('permission:attendance_records,delete', only: ['destroy']),
+            new Middleware('permission:attendance,view', only: ['index', 'show']),
+            new Middleware('permission:attendance,create', only: ['create', 'store']),
+            new Middleware('permission:attendance,delete', only: ['destroy']),
         ];
     }
     /**
