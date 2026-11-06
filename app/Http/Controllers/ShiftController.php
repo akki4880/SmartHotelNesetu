@@ -342,26 +342,4 @@ class ShiftController extends Controller implements HasMiddleware
         //
     }
 
-    public function toggleStatus($id)
-    {
-        try {
-            $shift = Shift::where('id', $id)
-                ->where('hotel_id', auth()->user()->hotel_id)
-                ->firstOrFail();
-
-            $shift->status = !$shift->status;
-            $shift->save();
-
-            return response()->json([
-                'status' => $shift->status,
-                'message' => 'Shift status updated successfully',
-                'data' => $shift
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ]);
-        }
-    }
 }

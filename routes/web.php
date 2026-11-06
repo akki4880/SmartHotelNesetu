@@ -298,8 +298,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('roles', RoleController::class);
 
         Route::resource('shifts', ShiftController::class);
-        Route::post('/shifts/{id}/toggle-status', [ShiftController::class, 'toggleStatus'])
-            ->name('shifts.toggleStatus');
+        
         Route::resource('attendances', AttendanceController::class);
         Route::get('check-attendances', [AttendanceController::class, 'checkAttendances'])->name('check-attendances');
 

@@ -157,7 +157,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             <input type="checkbox"
                                                 class="custom-control-input statusToggle globalStatusToggle"
                                                 id="switch{{ $shift->id }}" data-id="{{ $shift->id }}"
-                                                data-url="/employee-management/shifts/{{ $shift->id }}/toggle-status" {{
+                                                data-model="Shift" {{
                                             $shift->status ? 'checked' : '' }}>
                                             <label class="custom-control-label" for="switch{{ $shift->id }}"></label>
                                         </div>
