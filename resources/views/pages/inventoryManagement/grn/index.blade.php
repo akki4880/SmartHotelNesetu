@@ -859,8 +859,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                 $po.val(poId).trigger('change');
 
                 // GET ITEMS DIRECTLY FROM EDIT BUTTON
-                let items = $(this).attr('data-items');
-
+                let items = el.attr('data-items');
+                console.log(items);
                 // Render items
                 renderGrnItems(
                     $editModal.find('.grnItemsWrapper'),
