@@ -122,25 +122,6 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
 
                             @foreach($grns as $grn)
-@php
-    $editItems = $grn->items->map(function ($item) {
-        return [
-            'id' => $item->id,
-            'item_id' => $item->item_id,
-            'item_name' => $item->item->name ?? '',
-            'purchase_order_item_id' => $item->purchase_order_item_id,
-            'unit_id' => $item->unit_id,
-            'unit_name' => $item->unit->name ?? '',
-            'ordered_quantity' => $item->purchaseOrderItem->quantity ?? 0,
-            'remaining_quantity' => ($item->purchaseOrderItem->quantity ?? 0) - $item->received_quantity,
-            'received_quantity' => $item->received_quantity,
-            'rate' => $item->rate,
-            'tax_percentage' => $item->tax_percentage,
-            'tax_amount' => $item->tax_amount,
-            'total' => $item->total,
-        ];
-    });
-@endphp
                             <tr>
 
                                 @if(auth()->user()->hasPermission('goods_receipt', 'view') || auth()->user()->hasPermission('goods_receipt', 'edit') || auth()->user()->hasPermission('goods_receipt', 'delete'))
@@ -165,7 +146,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                         data-discount_amount="{{ $grn->discount_amount }}"
                                         data-sub_total="{{ $grn->sub_total }}"
                                         data-grand_total="{{ $grn->grand_total }}"
-                                        data-items='@json($editItems)'>
+                                        data-items="{{ json_encode($grn->edit_items) }}">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     @endif
