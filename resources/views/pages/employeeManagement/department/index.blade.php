@@ -72,9 +72,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header  d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Employee Departments</h3>
                 <div class="float-right">
+                    @if(auth()->user()->hasPermission('departments', 'create'))
                     <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#createModal"><i
                             class="fa-solid fa-plus"></i>
                         Create</button>
+                    @endif
                     <button class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -87,7 +89,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
-                                <th>Action</th>
+                                @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->hasPermission('departments', 'edit'))
+                                <th>Action</th>@endif
                                 <th>Sr</th>
                                 <th>Name</th>
                                 <th>Code</th>
@@ -98,13 +101,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($departments as $department)
                             <tr>
+                                @if(auth()->user()->hasPermission('departments', 'view') || auth()->user()->hasPermission('departments', 'edit'))
                                 <td class="w-auto">
                                     <div class="d-flex">
-                                        <button  
+                                        @if(auth()->user()->hasPermission('departments', 'view'))
+                                        <button
                                             class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader"
                                             data-url="{{ route('departments.show', $department->id) }}" title="View">
                                             <i class="fa fa-eye"></i>
                                         </button>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('departments', 'edit'))
                                         <a href="javascript:void(0);"
                                             class="btn one-btn-outline-success btn-icon btn-sm editDepartmentBtn btn-loader mx-1"
                                             data-id="{{ $department->id }}" data-name="{{ $department->name }}"
@@ -112,16 +119,18 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             title="Edit">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
-                                        <div class="custom-control custom-switch mt-1 ml-1" >
+                                        <div class="custom-control custom-switch mt-1 ml-1">
                                             <input type="checkbox"
                                                 class="custom-control-input statusToggle globalStatusToggle"
                                                 id="switch{{ $department->id }}" data-id="{{ $department->id }}"
-                                                data-url="/employee-management/departments/{{ $department->id }}/toggle-status" {{
+                                                data-model="Department" {{
                                             $department->status ? 'checked' : '' }}>
                                             <label class="custom-control-label" for="switch{{ $department->id }}"></label>
                                         </div>
+                                        @endif
                                     </div>
                                 </td>
+                                @endif
                                 <td>{{ $departments->firstItem() + $loop->index }}</td>
                                 <td>{{ $department->name }}</td>
                                 <td>{{ $department->code }}</td>

@@ -289,8 +289,6 @@ Route::middleware('auth')->group(function () {
 
         //department
         Route::resource('departments', DepartmentController::class);
-        Route::post('/departments/{id}/toggle-status', [DepartmentController::class, 'toggleStatus'])
-            ->name('departments.toggleStatus');
 
         //holidays
         Route::resource('holidays', HolidayController::class);

@@ -14,9 +14,9 @@ class DepartmentController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:employee_departments,view', only: ['index', 'show']),
-            new Middleware('permission:employee_departments,create', only: ['create', 'store']),
-            new Middleware('permission:employee_departments,edit', only: ['edit', 'update']),
+            new Middleware('permission:departments,view', only: ['index', 'show']),
+            new Middleware('permission:departments,create', only: ['create', 'store']),
+            new Middleware('permission:departments,edit', only: ['edit', 'update']),
         ];
     }
     /**
@@ -255,43 +255,4 @@ class DepartmentController extends Controller implements HasMiddleware
         //
     }
 
-    public function toggleStatus($id)
-    {
-        $user = Auth::user();
-
-        try {
-            $department = Department::where('hotel_id', $user->hotel_id)->findOrFail($id);
-            $oldStatus = $department->status;
-            $department->update([
-                'status' => !$department->status
-            ]);
-
-            auditLog(
-                module: 'Department',
-                action: 'Status Toggle',
-                recordId: $department->id,
-                old: ['status' => $oldStatus],
-                new: ['status' => $department->status],
-                description: 'Department status updated successfully'
-            );
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'Department status updated successfully',
-                'status'    => $department->status
-            ], 200);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
-
-            return response()->json([
-                'status'  => false,
-                'message' => 'Department not found'
-            ], 404);
-        } catch (\Throwable $e) {
-
-            return response()->json([
-                'status'  => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
 }
