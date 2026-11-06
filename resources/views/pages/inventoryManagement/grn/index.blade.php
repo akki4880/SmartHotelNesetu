@@ -146,7 +146,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                         data-discount_amount="{{ $grn->discount_amount }}"
                                         data-sub_total="{{ $grn->sub_total }}"
                                         data-grand_total="{{ $grn->grand_total }}"
-                                        data-items='@json($grn->edit_items)'>
+                                        data-items='@json($grn->items)'>
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     @endif
@@ -777,240 +777,240 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
 
 <script>
-    $(document).on('click', '.editItemBtn', function() {
+        $(document).on('click', '.editItemBtn', function() {
 
-        let el = $(this);
-        let id = el.data('id');
+            let el = $(this);
+            let id = el.data('id');
 
-        let form = $('#EditForm');
-        let $editModal = $('#editModal');
+            let form = $('#EditForm');
+            let $editModal = $('#editModal');
 
-        form.attr('action', "{{ url('inventory-management/grn') }}/" + id);
+            form.attr('action', "{{ url('inventory-management/grn') }}/" + id);
 
-        let $vendor = $editModal.find('.vendor-select');
-        let $po = $editModal.find('.po-select');
+            let $vendor = $editModal.find('.vendor-select');
+            let $po = $editModal.find('.po-select');
 
-        let vendorId = el.attr('data-vendor_id');
-        let poId = el.attr('data-purchase_order_id');
+            let vendorId = el.attr('data-vendor_id');
+            let poId = el.attr('data-purchase_order_id');
 
-        let grnDate = el.attr('data-grn_date');
-        let invoiceDate = el.attr('data-invoice_date');
+            let grnDate = el.attr('data-grn_date');
+            let invoiceDate = el.attr('data-invoice_date');
 
-        // BASIC FIELDS
-        $editModal.find('input[name="grn_date"]').val(
-            grnDate ? grnDate.substring(0, 10) : ''
-        );
-
-        $editModal.find('input[name="invoice_number"]').val(
-            el.attr('data-invoice_number')
-        );
-
-        $editModal.find('input[name="invoice_date"]').val(
-            invoiceDate ? invoiceDate.substring(0, 10) : ''
-        );
-
-        $editModal.find('textarea[name="notes"]').val(
-            el.attr('data-notes')
-        );
-
-        $editModal.find('.discountAmount').val(
-            el.attr('data-discount_amount')
-        );
-
-        // SUMMARY
-        $editModal.find('.subTotalText').text(
-            '₹ ' + (el.attr('data-sub_total') || '0.00')
-        );
-
-        $editModal.find('.discountText').text(
-            '₹ ' + (el.attr('data-discount_amount') || '0.00')
-        );
-
-        $editModal.find('.grandTotalText').text(
-            '₹ ' + (el.attr('data-grand_total') || '0.00')
-        );
-
-        // VENDOR
-        $vendor.val(vendorId).trigger('change');
-
-        // PO
-        $po.html('<option value="">Loading...</option>');
-
-        // LOAD PURCHASE ORDERS
-        $.ajax({
-            url: '/inventory-management/vendors/' + vendorId + '/purchase-orders?formaction=edit',
-            type: 'GET',
-
-            success: function(res) {
-
-                let options = '<option value="">Select PO</option>';
-
-                res.data.forEach(function(po) {
-                    options += `
-                    <option value="${po.id}">
-                        ${po.po_number}
-                    </option>
-                `;
-                });
-
-                $po.html(options);
-
-                // Select existing PO
-                $po.val(poId).trigger('change');
-
-                // GET ITEMS DIRECTLY FROM EDIT BUTTON
-                let items = el.attr('data-items');
-                console.log(items);
-                // Render items
-                renderGrnItems(
-                    $editModal.find('.grnItemsWrapper'),
-                    items
-                );
-
-                calculateSummary();
-
-                // Show modal
-                $editModal.modal('show');
-
-            },
-
-            error: function() {
-                toastr.error('Failed to load purchase orders');
-            }
-
-        });
-
-    });
-
-    function renderGrnItems($wrapper, items) {
-        $wrapper.html('');
-        console.log('Raw items:', items);
-        items = JSON.parse(items || '[]');
-        if (!Array.isArray(items) || items.length === 0) {
-            $('.grnItemsWrapper').html(
-                '<p class="text-center text-muted">No items found.</p>'
+            // BASIC FIELDS
+            $editModal.find('input[name="grn_date"]').val(
+                grnDate ? grnDate.substring(0, 10) : ''
             );
-            return;
-        }
-        console.log('Parsed items:', items);
-        console.log('Items count:', items.length);
-        items.forEach(function(item, index) {
 
-            let received = parseFloat(item.received_quantity) || 0;
-            let remaining = parseFloat(item.remaining_quantity) || 0;
-            let rate = parseFloat(item.rate) || 0;
-            let tax = parseFloat(item.tax_percentage) || 0;
+            $editModal.find('input[name="invoice_number"]').val(
+                el.attr('data-invoice_number')
+            );
 
-            let html = `
-            <div class="item-card mb-3">
-                <div class="row">
+            $editModal.find('input[name="invoice_date"]').val(
+                invoiceDate ? invoiceDate.substring(0, 10) : ''
+            );
 
-                    <div class="col-md-2">
-                        <label>Item</label>
+            $editModal.find('textarea[name="notes"]').val(
+                el.attr('data-notes')
+            );
 
-                        <input type="text"
-                            class="form-control"
-                            value="${item.item_name || ''}"
-                            readonly>
+            $editModal.find('.discountAmount').val(
+                el.attr('data-discount_amount')
+            );
 
-                        <input type="hidden"
-                            name="items[${index}][item_id]"
-                            value="${item.item_id}">
+            // SUMMARY
+            $editModal.find('.subTotalText').text(
+                '₹ ' + (el.attr('data-sub_total') || '0.00')
+            );
 
-                        <input type="hidden"
-                            name="items[${index}][purchase_order_item_id]"
-                            value="${item.purchase_order_item_id}">
+            $editModal.find('.discountText').text(
+                '₹ ' + (el.attr('data-discount_amount') || '0.00')
+            );
 
-                        <input type="hidden"
-                            name="items[${index}][tax_percentage]"
-                            class="tax_percentage"
-                            value="${tax}">
-                    </div>
+            $editModal.find('.grandTotalText').text(
+                '₹ ' + (el.attr('data-grand_total') || '0.00')
+            );
 
-                    <div class="col-md-2">
-                        <label>Ordered</label>
+            // VENDOR
+            $vendor.val(vendorId).trigger('change');
 
-                        <input type="text"
-                            class="form-control ordered_qty"
-                            value="${item.ordered_quantity || 0}"
-                            readonly>
+            // PO
+            $po.html('<option value="">Loading...</option>');
 
-                        <small class="text-info d-block mt-1">
-                            Remaining:
-                            <span class="remaining_qty">${remaining.toFixed(2)}</span>
-                        </small>
+            // LOAD PURCHASE ORDERS
+            $.ajax({
+                url: '/inventory-management/vendors/' + vendorId + '/purchase-orders?formaction=edit',
+                type: 'GET',
 
-                        <input type="hidden"
-                            class="remaining_original"
-                            value="${remaining}">
-                    </div>
+                success: function(res) {
 
-                    <div class="col-md-2">
-                        <label>Received</label>
+                    let options = '<option value="">Select PO</option>';
 
-                        <input type="number"
-                            step="0.01"
-                            min="0"
-                            max="${remaining}"
-                            name="items[${index}][received_quantity]"
-                            class="form-control received_qty"
-                            value="${received}">
+                    res.data.forEach(function(po) {
+                        options += `
+                        <option value="${po.id}">
+                            ${po.po_number}
+                        </option>
+                    `;
+                    });
 
-                        <small class="text-danger error-text"
-                            data-error="received_quantity"></small>
-                    </div>
+                    $po.html(options);
 
-                    <div class="col-md-1">
-                        <label>Unit</label>
+                    // Select existing PO
+                    $po.val(poId).trigger('change');
 
-                        <input type="text"
-                            class="form-control"
-                            value="${item.unit_name || ''}"
-                            readonly>
+                    // GET ITEMS DIRECTLY FROM EDIT BUTTON
+                    let items = el.attr('data-items');
+                    console.log(items);
+                    // Render items
+                    renderGrnItems(
+                        $editModal.find('.grnItemsWrapper'),
+                        items
+                    );
 
-                        <input type="hidden"
-                            name="items[${index}][unit_id]"
-                            value="${item.unit_id}">
-                    </div>
+                    calculateSummary();
 
-                    <div class="col-md-2">
-                        <label>Rate</label>
+                    // Show modal
+                    $editModal.modal('show');
 
-                        <input type="number"
-                            step="0.01"
-                            name="items[${index}][rate]"
-                            class="form-control rate"
-                            value="${rate}"
-                            readonly>
-                    </div>
+                },
 
-                    <div class="col-md-1">
-                        <label>Tax %</label>
+                error: function() {
+                    toastr.error('Failed to load purchase orders');
+                }
 
-                        <input type="text"
-                            class="form-control tax_display"
-                            value="${tax}"
-                            readonly>
-                    </div>
-
-                    <div class="col-md-2">
-                        <label>Total</label>
-
-                        <input type="text"
-                            name="items[${index}][total]"
-                            class="form-control total"
-                            value="${item.total || 0}"
-                            readonly>
-                    </div>
-
-                </div>
-            </div>
-        `;
-
-            $wrapper.append(html);
+            });
 
         });
 
-    }
+        function renderGrnItems($wrapper, items) {
+            $wrapper.html('');
+            console.log('Raw items:', items);
+            items = JSON.parse(items || '[]');
+            if (!Array.isArray(items) || items.length === 0) {
+                $('.grnItemsWrapper').html(
+                    '<p class="text-center text-muted">No items found.</p>'
+                );
+                return;
+            }
+            console.log('Parsed items:', items);
+            console.log('Items count:', items.length);
+            items.forEach(function(item, index) {
+
+                let received = parseFloat(item.received_quantity) || 0;
+                let remaining = parseFloat(item.remaining_quantity) || 0;
+                let rate = parseFloat(item.rate) || 0;
+                let tax = parseFloat(item.tax_percentage) || 0;
+
+                let html = `
+                <div class="item-card mb-3">
+                    <div class="row">
+
+                        <div class="col-md-2">
+                            <label>Item</label>
+
+                            <input type="text"
+                                class="form-control"
+                                value="${item.item_name || ''}"
+                                readonly>
+
+                            <input type="hidden"
+                                name="items[${index}][item_id]"
+                                value="${item.item_id}">
+
+                            <input type="hidden"
+                                name="items[${index}][purchase_order_item_id]"
+                                value="${item.purchase_order_item_id}">
+
+                            <input type="hidden"
+                                name="items[${index}][tax_percentage]"
+                                class="tax_percentage"
+                                value="${tax}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label>Ordered</label>
+
+                            <input type="text"
+                                class="form-control ordered_qty"
+                                value="${item.ordered_quantity || 0}"
+                                readonly>
+
+                            <small class="text-info d-block mt-1">
+                                Remaining:
+                                <span class="remaining_qty">${remaining.toFixed(2)}</span>
+                            </small>
+
+                            <input type="hidden"
+                                class="remaining_original"
+                                value="${remaining}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label>Received</label>
+
+                            <input type="number"
+                                step="0.01"
+                                min="0"
+                                max="${remaining}"
+                                name="items[${index}][received_quantity]"
+                                class="form-control received_qty"
+                                value="${received}">
+
+                            <small class="text-danger error-text"
+                                data-error="received_quantity"></small>
+                        </div>
+
+                        <div class="col-md-1">
+                            <label>Unit</label>
+
+                            <input type="text"
+                                class="form-control"
+                                value="${item.unit_name || ''}"
+                                readonly>
+
+                            <input type="hidden"
+                                name="items[${index}][unit_id]"
+                                value="${item.unit_id}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label>Rate</label>
+
+                            <input type="number"
+                                step="0.01"
+                                name="items[${index}][rate]"
+                                class="form-control rate"
+                                value="${rate}"
+                                readonly>
+                        </div>
+
+                        <div class="col-md-1">
+                            <label>Tax %</label>
+
+                            <input type="text"
+                                class="form-control tax_display"
+                                value="${tax}"
+                                readonly>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label>Total</label>
+
+                            <input type="text"
+                                name="items[${index}][total]"
+                                class="form-control total"
+                                value="${item.total || 0}"
+                                readonly>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+
+                $wrapper.append(html);
+
+            });
+
+        }
 </script>
 @endsection
