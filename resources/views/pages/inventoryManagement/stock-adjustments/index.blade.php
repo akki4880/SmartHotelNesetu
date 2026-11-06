@@ -35,7 +35,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <label>Date</label>
                             <input type="date" name="adjustment_date" class="form-control"
                                 value="{{ request('adjustment_date') }}">
-                        </div> 
+                        </div>
 
                         <!-- Adjustment Type -->
                         <div class="col-3">
@@ -94,9 +94,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header  d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Stock Adjustments</h3>
                 <div class="float-right">
+                    @if(auth()->user()->hasPermission('stock_adjustments', 'create'))
                     <button class="btn btn-danger btn-sm btn-loader" data-toggle="modal" data-target="#createModal"><i
                             class="fa-solid fa-plus"></i>
                         Create</button>
+                    @endif
                     <button class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -111,7 +113,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                         <thead class="bg-primary text-white">
                             <tr>
-                                <th>Action</th>
+                                @if(auth()->user()->hasPermission('stock_adjustments', 'view') || auth()->user()->hasPermission('stock_adjustments', 'delete'))
+                                <th>Action</th>@endif
                                 <th>Sr</th>
                                 <th>Adjustment No</th>
                                 <th>Date</th>
@@ -133,16 +136,19 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <tr>
 
                                 {{-- ACTION --}}
+                                @if(auth()->user()->hasPermission('stock_adjustments', 'view') || auth()->user()->hasPermission('stock_adjustments', 'delete'))
                                 <td>
                                     <div class="d-flex">
-
+                                        @if(auth()->user()->hasPermission('stock_adjustments', 'view'))
                                         {{-- VIEW --}}
                                         <button class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader"
                                             data-url="{{ route('stock-adjustments.show', $adjustment->id) }}"
                                             title="View">
                                             <i class="fa fa-eye"></i>
                                         </button>
+                                        @endif
 
+                                        @if(auth()->user()->hasPermission('stock_adjustments', 'delete'))
                                         {{-- DELETE --}}
                                         <button class="btn btn-outline-danger btn-icon btn-sm delete-btn mx-1"
                                             data-id="{{ $adjustment->id }}"
@@ -150,9 +156,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             title="Delete">
                                             <i class="fa fa-trash"></i>
                                         </button>
-
+                                        @endif
                                     </div>
                                 </td>
+                                @endif
 
                                 {{-- SR --}}
                                 <td>{{ $adjustments->firstItem() + $loop->index }}</td>
