@@ -894,8 +894,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         });
 
         // Make Vendor and PO readonly in Edit modal
-        $vendor.prop('disabled', true).trigger('change.select2');
-        $po.prop('disabled', true).trigger('change.select2');
+        $vendor.prop('readonly', true).trigger('change.select2');
+        $po.prop('readonly', true).trigger('change.select2');
 
     });
 
