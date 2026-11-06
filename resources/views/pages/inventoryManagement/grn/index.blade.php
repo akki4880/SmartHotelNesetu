@@ -885,7 +885,6 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     function renderGrnItems($wrapper, items) {
 
         $wrapper.html('');
-        items = JSON.parse(items || '[]');
 
         if (!items || items.length === 0) {
             $wrapper.html('<div class="alert alert-info">No items found.</div>');
