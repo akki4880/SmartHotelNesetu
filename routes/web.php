@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 use App\Http\Controllers\AdditionalServiceController;
 use App\Http\Controllers\AdminController;
@@ -257,6 +257,7 @@ Route::middleware('auth')->group(function () {
 
         //grn
         Route::resource('grn', InventoryGoodsReceiptController::class);
+        Route::get('/grn/{id}/items', [InventoryGoodsReceiptController::class, 'getItems']);
         Route::get('/vendors/{vendor}/purchase-orders', [InventoryGoodsReceiptController::class, 'getPOByVendor']);
 
         //stock
