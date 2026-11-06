@@ -29,7 +29,7 @@ class AttendanceController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
-        $query = Attendance::with(['employee', 'shift', 'hotel']);
+        $query = Attendance::with(['employee', 'shift', 'hotel'])->where('hotel_id', auth()->user()->hotel_id);
 
         if ($request->filled('employee_id')) {
             $query->where('employee_id', $request->employee_id);
@@ -45,8 +45,8 @@ class AttendanceController extends Controller implements HasMiddleware
 
         $attendances = $query->orderby('attendance_date', 'DESC')->paginate(perPage())->withQueryString();
 
-        $employees = Employee::all();
-        $shifts = Shift::all();
+        $employees = Employee::where('hotel_id', auth()->user()->hotel_id)->get();
+        $shifts = Shift::where('hotel_id', auth()->user()->hotel_id)->get();
 
         return view('pages.employeeManagement.attendance.index', compact('attendances', 'employees', 'shifts'));
     }
