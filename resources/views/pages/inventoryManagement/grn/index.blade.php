@@ -859,7 +859,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                 $po.val(poId).trigger('change');
 
                 // GET ITEMS DIRECTLY FROM EDIT BUTTON
-                let items = el.data('items');
+                let items = el.attr('data-items');
 
                 // Render items
                 renderGrnItems(
@@ -885,6 +885,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     function renderGrnItems($wrapper, items) {
 
         $wrapper.html('');
+        items = JSON.parse(items || '[]');
 
         if (!items || items.length === 0) {
             $wrapper.html('<div class="alert alert-info">No items found.</div>');
