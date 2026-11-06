@@ -309,8 +309,8 @@ class AttendanceController extends Controller implements HasMiddleware
 
     // Custom method to check attendances
     public function checkAttendances(Request $request){
-        $employees = Employee::all();
-        $shifts = Shift::all();
+        $employees = Employee::where('hotel_id', auth()->user()->hotel_id)->get();
+        $shifts = Shift::where('hotel_id', auth()->user()->hotel_id)->get();
 
         $year = $request->get('year', now()->year);
         $month = $request->get('month', now()->month);
