@@ -499,7 +499,15 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     // 🔁 Summary calculation
     function calculateSummary() {
 
-        let $scope = $('.modal.show').length ? $('.modal.show') : $('body');
+        let $visibleModal = $('.modal.show').first();
+        let $scope = $visibleModal.length ? $visibleModal : $('#editModal');
+        let $discountInput = $scope.find('.discountAmount').first();
+
+        if (!$discountInput.length) {
+            $scope = $('body');
+            $discountInput = $scope.find('.discountAmount').first();
+        }
+
         let subTotal = 0;
 
         $scope.find('.item-card').each(function() {
@@ -507,7 +515,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             subTotal += rowTotal;
         });
 
-        let discount = parseFloat($scope.find('.discountAmount').val()) || 0;
+        let discount = parseFloat($discountInput.val()) || 0;
 
         let grandTotal = subTotal - discount;
         if (grandTotal < 0) grandTotal = 0;
@@ -621,12 +629,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             let poId = $(this).val();
             if (!poId) return;
 
+            if ($modal.attr('id') === 'editModal') {
+                return;
+            }
+
             $.get('/inventory-management/purchase-orders/' + poId + '/items', function(res) {
 
                 let wrapper = $modal.find('.grnItemsWrapper');
                 wrapper.html('');
 
-                $modal.find('.discountAmount').val(res.discount || 0);
+                const discountValue = parseFloat(res.discount || 0);
+                $modal.find('.discountAmount').val(discountValue).trigger('input');
 
                 let index = 0;
 
@@ -813,21 +826,20 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                 el.attr('data-notes')
             );
 
-            $editModal.find('.discountAmount').val(
-                el.attr('data-discount_amount')
-            );
+            const discountValue = parseFloat(el.attr('data-discount_amount') || 0);
+            $editModal.find('.discountAmount').val(discountValue).trigger('input');
 
             // SUMMARY
             $editModal.find('.subTotalText').text(
-                '₹ ' + (el.attr('data-sub_total') || '0.00')
+                '₹ ' + (parseFloat(el.attr('data-sub_total') || 0)).toFixed(2)
             );
 
             $editModal.find('.discountText').text(
-                '₹ ' + (el.attr('data-discount_amount') || '0.00')
+                '₹ ' + (parseFloat(el.attr('data-discount_amount') || 0)).toFixed(2)
             );
 
             $editModal.find('.grandTotalText').text(
-                '₹ ' + (el.attr('data-grand_total') || '0.00')
+                '₹ ' + (parseFloat(el.attr('data-grand_total') || 0)).toFixed(2)
             );
 
             // VENDOR
@@ -867,10 +879,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         items
                     );
 
-                    calculateSummary();
-
-                    // Show modal
+                    // Show modal first so summary reads the visible edit modal discount
                     $editModal.modal('show');
+                    setTimeout(function() {
+                        calculateSummary();
+                    }, 50);
 
                 },
 
@@ -896,8 +909,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             console.log('Items count:', items.length);
             items.forEach(function(item, index) {
 
+                let itemName = item.item_name || item.item?.name || item.name || '';
+                let orderedQty = parseFloat(item.ordered_quantity ?? item.quantity ?? item.orderedQty ?? 0) || 0;
+                let remaining = parseFloat(item.remaining_quantity ?? item.remaining_qty ?? (orderedQty - (parseFloat(item.received_quantity) || 0)) ?? 0) || 0;
+                let unitName = item.unit_name || item.unit?.short_name || item.unit?.name || '';
                 let received = parseFloat(item.received_quantity) || 0;
-                let remaining = parseFloat(item.remaining_quantity) || 0;
                 let rate = parseFloat(item.rate) || 0;
                 let tax = parseFloat(item.tax_percentage) || 0;
 
@@ -910,7 +926,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                             <input type="text"
                                 class="form-control"
-                                value="${item.item_name || ''}"
+                                value="${itemName}"
                                 readonly>
 
                             <input type="hidden"
@@ -932,7 +948,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                             <input type="text"
                                 class="form-control ordered_qty"
-                                value="${item.ordered_quantity || 0}"
+                                value="${orderedQty}"
                                 readonly>
 
                             <small class="text-info d-block mt-1">
@@ -965,7 +981,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                             <input type="text"
                                 class="form-control"
-                                value="${item.unit_name || ''}"
+                                value="${unitName}"
                                 readonly>
 
                             <input type="hidden"

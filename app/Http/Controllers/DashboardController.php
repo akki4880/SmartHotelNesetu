@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Employee;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\RoomNumber;
 use App\Models\Subscription;
@@ -43,9 +44,50 @@ class DashboardController extends Controller implements HasMiddleware
 
             return view('pages.admins.dashboard.index', compact('data', 'hotels'));
         } elseif (Auth::user()->user_role_id == 3) {
-            $totalHotels = Hotel::count();
-            return view('dashboard', compact('totalHotels'));
+            $hotelId = Auth::user()->hotel_id;
+
+            $totalRooms = RoomNumber::where('hotel_id', $hotelId)->count();
+            $occupiedRooms = Booking::where('hotel_id', $hotelId)
+                ->where('status', 'checked_in')
+                ->count();
+            $availableRooms = max(0, $totalRooms - $occupiedRooms);
+            $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 1) : 0;
+
+            $stats = [
+                'new_bookings_today' => Booking::where('hotel_id', $hotelId)
+                    ->whereDate('created_at', today())
+                    ->count(),
+                'rooms_scheduled' => Booking::where('hotel_id', $hotelId)
+                    ->whereDate('check_in_date', today())
+                    ->count(),
+                'total_customers' => Guest::where('hotel_id', $hotelId)->count(),
+                'revenue_this_month' => (float) Booking::where('hotel_id', $hotelId)
+                    ->whereMonth('created_at', now()->month)
+                    ->sum('total_amount'),
+                'available_rooms' => $availableRooms,
+                'occupied_rooms' => $occupiedRooms,
+                'check_ins_today' => Booking::where('hotel_id', $hotelId)
+                    ->whereDate('check_in_date', today())
+                    ->count(),
+                'check_outs_today' => Booking::where('hotel_id', $hotelId)
+                    ->whereDate('check_out_date', today())
+                    ->count(),
+            ];
+
+            $recentBookings = Booking::with(['primaryGuest', 'rooms.roomType'])
+                ->where('hotel_id', $hotelId)
+                ->latest('created_at')
+                ->take(6)
+                ->get();
+
+            $customers = Guest::where('hotel_id', $hotelId)
+                ->latest('created_at')
+                ->take(5)
+                ->get();
+
+            return view('dashboard', compact('stats', 'recentBookings', 'customers', 'totalRooms', 'occupancyRate'));
         } else {
+            $totalHotels = Hotel::count();
             return view('dashboard', compact('totalHotels'));
         }
     }

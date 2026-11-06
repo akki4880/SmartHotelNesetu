@@ -10,9 +10,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card blue">
             <div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3b82f6"><i class="bi bi-calendar-plus"></i></div>
-            <div class="stat-value">28</div>
+            <div class="stat-value">{{ $stats['new_bookings_today'] }}</div>
             <div class="stat-label">New Bookings Today</div>
-            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> 14% vs yesterday</span>
+            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> {{ $stats['new_bookings_today'] }} booked today</span>
         </div>
     </div>
 
@@ -20,9 +20,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card purple">
             <div class="stat-icon" style="background:rgba(139,92,246,.12);color:#8b5cf6"><i class="bi bi-calendar3-range"></i></div>
-            <div class="stat-value">12</div>
+            <div class="stat-value">{{ $stats['rooms_scheduled'] }}</div>
             <div class="stat-label">Rooms Scheduled</div>
-            <span class="stat-badge neu"><i class="bi bi-dash"></i> No change</span>
+            <span class="stat-badge neu"><i class="bi bi-dash"></i> Arrivals today</span>
         </div>
     </div>
 
@@ -30,9 +30,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card green">
             <div class="stat-icon" style="background:rgba(16,185,129,.12);color:#10b981"><i class="bi bi-people"></i></div>
-            <div class="stat-value">1,284</div>
+            <div class="stat-value">{{ number_format($stats['total_customers']) }}</div>
             <div class="stat-label">Total Customers</div>
-            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> 8% this month</span>
+            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> {{ number_format($stats['total_customers']) }} total guests</span>
         </div>
     </div>
 
@@ -40,9 +40,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card orange">
             <div class="stat-icon" style="background:rgba(245,158,11,.12);color:#f59e0b"><i class="bi bi-currency-rupee"></i></div>
-            <div class="stat-value">₹4.2L</div>
+            <div class="stat-value">₹{{ number_format($stats['revenue_this_month'], 2) }}</div>
             <div class="stat-label">Revenue This Month</div>
-            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> 22% vs last month</span>
+            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> {{ number_format($stats['revenue_this_month'], 2) }} booked</span>
         </div>
     </div>
 
@@ -50,9 +50,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card cyan">
             <div class="stat-icon" style="background:rgba(6,182,212,.12);color:#06b6d4"><i class="bi bi-door-closed"></i></div>
-            <div class="stat-value">26</div>
+            <div class="stat-value">{{ $stats['available_rooms'] }}</div>
             <div class="stat-label">Available Rooms</div>
-            <span class="stat-badge neu"><i class="bi bi-dash"></i> Out of 150 total</span>
+            <span class="stat-badge neu"><i class="bi bi-dash"></i> Out of {{ $totalRooms }} total</span>
         </div>
     </div>
 
@@ -60,9 +60,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card red">
             <div class="stat-icon" style="background:rgba(239,68,68,.12);color:#ef4444"><i class="bi bi-door-open"></i></div>
-            <div class="stat-value">124</div>
+            <div class="stat-value">{{ $stats['occupied_rooms'] }}</div>
             <div class="stat-label">Occupied Rooms</div>
-            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> 82.6% occupancy</span>
+            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> {{ $occupancyRate }}% occupancy</span>
         </div>
     </div>
 
@@ -70,9 +70,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card pink">
             <div class="stat-icon" style="background:rgba(236,72,153,.12);color:#ec4899"><i class="bi bi-box-arrow-in-right"></i></div>
-            <div class="stat-value">18</div>
+            <div class="stat-value">{{ $stats['check_ins_today'] }}</div>
             <div class="stat-label">Check-ins Today</div>
-            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> 5 more than avg</span>
+            <span class="stat-badge up"><i class="bi bi-arrow-up-short"></i> Based on today</span>
         </div>
     </div>
 
@@ -80,9 +80,9 @@
     <div class="col-6 col-md-3 mb-3">
         <div class="stat-card teal">
             <div class="stat-icon" style="background:rgba(20,184,166,.12);color:#14b8a6"><i class="bi bi-box-arrow-right"></i></div>
-            <div class="stat-value">11</div>
+            <div class="stat-value">{{ $stats['check_outs_today'] }}</div>
             <div class="stat-label">Check-outs Today</div>
-            <span class="stat-badge down"><i class="bi bi-arrow-down-short"></i> 2 less than avg</span>
+            <span class="stat-badge down"><i class="bi bi-arrow-down-short"></i> Based on today</span>
         </div>
     </div>
 </div>
@@ -474,138 +474,49 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><span style="font-family:monospace;font-weight:600;color:var(--sh-primary)">#BK-2401</span></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#3b82f6">RS</div>
-                            <div>
-                                <div class="fw-600" style="font-weight:600">Rajesh Sharma</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">rajesh@email.com</div>
+                @forelse($recentBookings as $booking)
+                    @php
+                        $bookingStatus = match ($booking->status) {
+                            'confirmed' => ['label' => 'Confirmed', 'class' => 'confirmed', 'icon' => 'bi-check-circle-fill'],
+                            'checked_in' => ['label' => 'Checked In', 'class' => 'checked-in', 'icon' => 'bi-door-open'],
+                            'checked_out' => ['label' => 'Checked Out', 'class' => 'checked-out', 'icon' => 'bi-box-arrow-right'],
+                            'cancelled' => ['label' => 'Cancelled', 'class' => 'cancelled', 'icon' => 'bi-x-circle'],
+                            'no_show' => ['label' => 'No Show', 'class' => 'cancelled', 'icon' => 'bi-slash-circle'],
+                            default => ['label' => 'Pending', 'class' => 'pending', 'icon' => 'bi-clock'],
+                        };
+
+                        $bookingGuest = $booking->primaryGuest ? $booking->primaryGuest->full_name : ($booking->guest?->full_name ?? 'Guest');
+                        $bookingEmail = $booking->primaryGuest ? $booking->primaryGuest->email : ($booking->guest?->email ?? 'N/A');
+                        $roomNumbers = $booking->rooms->pluck('room_number')->implode(', ');
+                        $nights = max(1, $booking->check_in_date && $booking->check_out_date ? \Carbon\Carbon::parse($booking->check_in_date)->diffInDays(\Carbon\Carbon::parse($booking->check_out_date)) : 1);
+                    @endphp
+                    <tr>
+                        <td><span style="font-family:monospace;font-weight:600;color:var(--sh-primary)">#BK-{{ $booking->id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="guest-avatar" style="background:#{{ substr(md5($bookingGuest), 0, 6) }}">{{ strtoupper(substr($bookingGuest, 0, 2)) }}</div>
+                                <div>
+                                    <div class="fw-600" style="font-weight:600">{{ $bookingGuest }}</div>
+                                    <div style="font-size:.7rem;color:var(--sh-text-muted)">{{ $bookingEmail }}</div>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td><span class="fw-600" style="font-weight:600">204</span> <span style="font-size:.72rem;color:var(--sh-text-muted)">Deluxe</span></td>
-                    <td>15 Apr 2025</td>
-                    <td>18 Apr 2025</td>
-                    <td>3</td>
-                    <td><span style="font-weight:700">₹9,500</span></td>
-                    <td><span class="badge-status confirmed"><i class="bi bi-check-circle-fill"></i> Confirmed</span></td>
-                    <td>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-name="Rajesh Sharma" data-room="204 - Deluxe" data-checkin="15 Apr 2025" data-checkout="18 Apr 2025" data-status="confirmed" data-amount="₹9,500"><i class="bi bi-eye"></i></button>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td><span style="font-family:monospace;font-weight:600;color:var(--sh-primary)">#BK-2402</span></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#a855f7">PN</div>
-                            <div>
-                                <div style="font-weight:600">Priya Nair</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">priya@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span style="font-weight:600">501</span> <span style="font-size:.72rem;color:var(--sh-text-muted)">Suite</span></td>
-                    <td>16 Apr 2025</td>
-                    <td>20 Apr 2025</td>
-                    <td>4</td>
-                    <td><span style="font-weight:700">₹28,000</span></td>
-                    <td><span class="badge-status checked-in"><i class="bi bi-door-open"></i> Checked In</span></td>
-                    <td>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-name="Priya Nair" data-room="501 - Suite" data-checkin="16 Apr 2025" data-checkout="20 Apr 2025" data-status="checked-in" data-amount="₹28,000"><i class="bi bi-eye"></i></button>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td><span style="font-family:monospace;font-weight:600;color:var(--sh-primary)">#BK-2403</span></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#10b981">MA</div>
-                            <div>
-                                <div style="font-weight:600">Mohammed Ali</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">mali@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span style="font-weight:600">118</span> <span style="font-size:.72rem;color:var(--sh-text-muted)">Standard</span></td>
-                    <td>14 Apr 2025</td>
-                    <td>16 Apr 2025</td>
-                    <td>2</td>
-                    <td><span style="font-weight:700">₹5,200</span></td>
-                    <td><span class="badge-status pending"><i class="bi bi-clock"></i> Pending</span></td>
-                    <td>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-name="Mohammed Ali" data-room="118 - Standard" data-checkin="14 Apr 2025" data-checkout="16 Apr 2025" data-status="pending" data-amount="₹5,200"><i class="bi bi-eye"></i></button>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td><span style="font-family:monospace;font-weight:600;color:var(--sh-primary)">#BK-2404</span></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#f59e0b">AP</div>
-                            <div>
-                                <div style="font-weight:600">Ananya Pillai</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">ananya@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span style="font-weight:600">310</span> <span style="font-size:.72rem;color:var(--sh-text-muted)">Family</span></td>
-                    <td>10 Apr 2025</td>
-                    <td>14 Apr 2025</td>
-                    <td>4</td>
-                    <td><span style="font-weight:700">₹14,800</span></td>
-                    <td><span class="badge-status checked-out"><i class="bi bi-box-arrow-right"></i> Checked Out</span></td>
-                    <td>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-name="Ananya Pillai" data-room="310 - Family" data-checkin="10 Apr 2025" data-checkout="14 Apr 2025" data-status="checked-out" data-amount="₹14,800"><i class="bi bi-eye"></i></button>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td><span style="font-family:monospace;font-weight:600;color:var(--sh-primary)">#BK-2405</span></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#ef4444">VS</div>
-                            <div>
-                                <div style="font-weight:600">Vikram Singh</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">vikram@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span style="font-weight:600">115</span> <span style="font-size:.72rem;color:var(--sh-text-muted)">Standard</span></td>
-                    <td>17 Apr 2025</td>
-                    <td>19 Apr 2025</td>
-                    <td>2</td>
-                    <td><span style="font-weight:700">₹4,800</span></td>
-                    <td><span class="badge-status cancelled"><i class="bi bi-x-circle"></i> Cancelled</span></td>
-                    <td>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-name="Vikram Singh" data-room="115 - Standard" data-checkin="17 Apr 2025" data-checkout="19 Apr 2025" data-status="cancelled" data-amount="₹4,800"><i class="bi bi-eye"></i></button>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td><span style="font-family:monospace;font-weight:600;color:var(--sh-primary)">#BK-2406</span></td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#06b6d4">SK</div>
-                            <div>
-                                <div style="font-weight:600">Sunita Kapoor</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">sunita@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span style="font-weight:600">420</span> <span style="font-size:.72rem;color:var(--sh-text-muted)">Deluxe</span></td>
-                    <td>18 Apr 2025</td>
-                    <td>21 Apr 2025</td>
-                    <td>3</td>
-                    <td><span style="font-weight:700">₹9,200</span></td>
-                    <td><span class="badge-status confirmed"><i class="bi bi-check-circle-fill"></i> Confirmed</span></td>
-                    <td>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-name="Sunita Kapoor" data-room="420 - Deluxe" data-checkin="18 Apr 2025" data-checkout="21 Apr 2025" data-status="confirmed" data-amount="₹9,200"><i class="bi bi-eye"></i></button>
-                        <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button>
-                    </td>
-                </tr>
+                        </td>
+                        <td><span class="fw-600" style="font-weight:600">{{ $roomNumbers ?: 'N/A' }}</span> <span style="font-size:.72rem;color:var(--sh-text-muted)">{{ $booking->rooms->first()?->roomType?->name ?? 'Room' }}</span></td>
+                        <td>{{ \Carbon\Carbon::parse($booking->check_in_date)->format('d M Y') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($booking->check_out_date)->format('d M Y') }}</td>
+                        <td>{{ $nights }}</td>
+                        <td><span style="font-weight:700">₹{{ number_format((float) $booking->total_amount, 2) }}</span></td>
+                        <td><span class="badge-status {{ $bookingStatus['class'] }}"><i class="bi {{ $bookingStatus['icon'] }}"></i> {{ $bookingStatus['label'] }}</span></td>
+                        <td>
+                            <button class="btn-sh btn-sh-ghost btn-sh-sm" data-bs-toggle="modal" data-bs-target="#bookingModal" data-name="{{ $bookingGuest }}" data-room="{{ $roomNumbers ?: 'N/A' }}" data-checkin="{{ \Carbon\Carbon::parse($booking->check_in_date)->format('d M Y') }}" data-checkout="{{ \Carbon\Carbon::parse($booking->check_out_date)->format('d M Y') }}" data-status="{{ $booking->status }}" data-amount="₹{{ number_format((float) $booking->total_amount, 2) }}"><i class="bi bi-eye"></i></button>
+                            <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">No recent booking records found for this hotel.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
@@ -650,96 +561,41 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#3b82f6">RS</div>
-                            <div>
-                                <div style="font-weight:600">Rajesh Sharma</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">rajesh@email.com</div>
+                @forelse($customers as $customer)
+                    @php
+                        $customerVisits = \App\Models\Booking::whereHas('bookingGuests', function ($query) use ($customer) {
+                            $query->where('guest_id', $customer->id);
+                        })->count();
+
+                        $customerSpend = \App\Models\Booking::whereHas('bookingGuests', function ($query) use ($customer) {
+                            $query->where('guest_id', $customer->id);
+                        })->sum('total_amount');
+
+                        $customerInitials = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $customer->full_name), 0, 2));
+                    @endphp
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="guest-avatar" style="background:#{{ substr(md5($customer->full_name), 0, 6) }}">{{ $customerInitials ?: 'G' }}</div>
+                                <div>
+                                    <div style="font-weight:600">{{ $customer->full_name }}</div>
+                                    <div style="font-size:.7rem;color:var(--sh-text-muted)">{{ $customer->email ?: 'No email' }}</div>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td>+91 98765 43210</td>
-                    <td>Mumbai</td>
-                    <td><strong>8</strong></td>
-                    <td><strong style="color:#10b981">₹74,500</strong></td>
-                    <td>15 Apr 2025</td>
-                    <td><span class="badge-status vip"><i class="bi bi-gem"></i> VIP</span></td>
-                    <td><button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-eye"></i></button> <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button></td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#a855f7">PN</div>
-                            <div>
-                                <div style="font-weight:600">Priya Nair</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">priya@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>+91 87654 32109</td>
-                    <td>Bengaluru</td>
-                    <td><strong>5</strong></td>
-                    <td><strong style="color:#10b981">₹1,12,000</strong></td>
-                    <td>16 Apr 2025</td>
-                    <td><span class="badge-status vip"><i class="bi bi-gem"></i> VIP</span></td>
-                    <td><button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-eye"></i></button> <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button></td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#10b981">MA</div>
-                            <div>
-                                <div style="font-weight:600">Mohammed Ali</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">mali@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>+91 76543 21098</td>
-                    <td>Hyderabad</td>
-                    <td><strong>3</strong></td>
-                    <td><strong style="color:#10b981">₹21,400</strong></td>
-                    <td>14 Apr 2025</td>
-                    <td><span class="badge-status confirmed"><i class="bi bi-person-check"></i> Regular</span></td>
-                    <td><button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-eye"></i></button> <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button></td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#f59e0b">AP</div>
-                            <div>
-                                <div style="font-weight:600">Ananya Pillai</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">ananya@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>+91 65432 10987</td>
-                    <td>Chennai</td>
-                    <td><strong>12</strong></td>
-                    <td><strong style="color:#10b981">₹2,38,500</strong></td>
-                    <td>10 Apr 2025</td>
-                    <td><span class="badge-status vip"><i class="bi bi-gem"></i> VIP</span></td>
-                    <td><button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-eye"></i></button> <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button></td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="guest-avatar" style="background:#06b6d4">SK</div>
-                            <div>
-                                <div style="font-weight:600">Sunita Kapoor</div>
-                                <div style="font-size:.7rem;color:var(--sh-text-muted)">sunita@email.com</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>+91 54321 09876</td>
-                    <td>Delhi</td>
-                    <td><strong>2</strong></td>
-                    <td><strong style="color:#10b981">₹18,200</strong></td>
-                    <td>18 Apr 2025</td>
-                    <td><span class="badge-status confirmed"><i class="bi bi-person-check"></i> Regular</span></td>
-                    <td><button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-eye"></i></button> <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button></td>
-                </tr>
+                        </td>
+                        <td>{{ $customer->mobile ?: 'N/A' }}</td>
+                        <td>{{ $customer->address ?: 'N/A' }}</td>
+                        <td><strong>{{ $customerVisits }}</strong></td>
+                        <td><strong style="color:#10b981">₹{{ number_format((float) $customerSpend, 2) }}</strong></td>
+                        <td>{{ $customer->created_at ? $customer->created_at->format('d M Y') : 'N/A' }}</td>
+                        <td><span class="badge-status confirmed"><i class="bi bi-person-check"></i> Guest</span></td>
+                        <td><button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-eye"></i></button> <button class="btn-sh btn-sh-ghost btn-sh-sm"><i class="bi bi-pencil"></i></button></td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No guest records found for this hotel.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

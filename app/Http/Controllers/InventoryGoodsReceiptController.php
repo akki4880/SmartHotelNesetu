@@ -42,7 +42,16 @@ class InventoryGoodsReceiptController extends Controller implements HasMiddlewar
             ->with('vendor')
             ->get();
 
-        $query = InventoryGoodsReceipt::with(['vendor', 'purchaseOrder', 'user'])
+        $query = InventoryGoodsReceipt::with([
+                'vendor',
+                'purchaseOrder',
+                'user',
+                'items.item',
+                'items.unit',
+                'items.purchaseOrderItem',
+                'items.purchaseOrderItem.item',
+                'items.purchaseOrderItem.unit',
+            ])
             ->where('hotel_id', auth()->user()->hotel_id);
 
         // Filters
