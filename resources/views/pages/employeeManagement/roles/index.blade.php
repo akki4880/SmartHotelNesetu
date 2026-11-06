@@ -73,9 +73,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header  d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Roles</h3>
                 <div class="float-right">
+                    @if(auth()->user()->hasPermission('roles', 'create'))
                     <button class="btn btn-danger btn-sm btn-loader" data-toggle="modal" data-target="#createModal"><i
                             class="fa-solid fa-plus"></i>
                         Create</button>
+                    @endif
                     <button class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -89,7 +91,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
+                                @if(auth()->user()->hasPermission('roles', 'view') || auth()->user()->hasPermission('roles', 'edit'))
                                 <th>Action</th>
+                                @endif
                                 <th>Sr</th>
                                 <th>Role</th>
                                 <th>Description</th>
@@ -99,21 +103,26 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($userRoles as $index => $role)
                             <tr>
+                                @if(auth()->user()->hasPermission('roles', 'view') || auth()->user()->hasPermission('roles', 'edit'))
                                 <td style="width: 78px;">
-                                    <!-- <a href="javascript:void(0);" class="btn one-btn-outline-danger btn-icon btn-sm" title="Delete"> <i class="fa-solid fa-trash"></i> </a> -->
+                                    @if(auth()->user()->hasPermission('roles', 'view'))
                                     <button data-toggle="tooltip"
                                         class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader"
                                         data-url="{{ route('roles.show', $role->id) }}" title="View">
                                         <i class="fa fa-eye"></i>
                                     </button>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('roles', 'edit'))
                                     <a href="javascript:void(0);" data-toggle="tooltip"
                                         class="btn one-btn-outline-success btn-icon btn-sm editRoleBtn btn-loader"
                                         data-id="{{ $role->id }}" data-name="{{ $role->role_name }}"
                                         data-description="{{ $role->description }}" title="Edit">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
+                                    @endif
 
                                 </td>
+                                @endif
                                 <td>{{ ($userRoles->currentPage() - 1) * $userRoles->perPage() + $index + 1 }}</td>
                                 <td>{{ $role->role_name }}</td>
                                 <td><span data-toggle="tooltip" title="{{ $role->description }}"> {{ shortText($role->description) }}</span></td>

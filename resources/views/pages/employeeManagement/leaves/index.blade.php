@@ -90,9 +90,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Leaves</h3>
                 <div class="float-right">
+                    @if(auth()->user()->hasPermission('leaves', 'create'))
                     <button class="btn btn-danger btn-sm btn-loader" data-toggle="modal" data-target="#createModal">
                         <i class="fa-solid fa-plus"></i> Create
                     </button>
+                    @endif
                     <button id="filterBtn" class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -105,7 +107,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
-                                <th>Action</th>
+                                @if(auth()->user()->hasPermission('leaves', 'view') || auth()->user()->hasPermission('leaves', 'edit'))
+                                <th>Action</th>@endif
                                 <th>Sr</th>
                                 <th>Employee</th>
                                 <th>Leave Type</th>
@@ -121,13 +124,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($leaves as $index => $leave)
                             <tr>
+                                @if(auth()->user()->hasPermission('leaves', 'view') || auth()->user()->hasPermission('leaves', 'edit'))
                                 <td>
                                     <div class="d-flex align-items-center">
+                                        @if(auth()->user()->hasPermission('leaves', 'view'))
                                         <button
                                             class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader mx-1"
                                             data-url="{{ route('leaves.show', $leave->id) }}" title="View">
                                             <i class="fa fa-eye"></i>
                                         </button>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('leaves', 'edit'))
                                         @if($leave->status === 'pending')
                                         <button
                                             class="btn btn-outline-success btn-icon btn-sm edit-btn mx-1"
@@ -160,8 +167,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             <i class="fa fa-times"></i>
                                         </button>
                                         @endif
+                                        @endif
                                     </div>
                                 </td>
+                                @endif
 
                                 <td>
                                     {{ ($leaves->currentPage() - 1) * $leaves->perPage() + $index + 1 }}

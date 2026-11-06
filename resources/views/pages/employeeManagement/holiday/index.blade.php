@@ -81,9 +81,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header  d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Holidays</h3>
                 <div class="float-right">
+                    @if(auth()->user()->hasPermission('holidays', 'create'))
                     <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#createModal"><i
                             class="fa-solid fa-plus"></i>
                         Create</button>
+                    @endif
                     <button class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -96,7 +98,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
-                                <th>Action</th>
+                                @if(auth()->user()->hasPermission('holidays', 'view') || auth()->user()->hasPermission('holidays', 'edit'))
+                                <th>Action</th>@endif
                                 <th>Sr</th>
                                 <th>Name</th>
                                 <th>Date</th>
@@ -107,13 +110,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($holidays as $holiday)
                             <tr>
+                                @if(auth()->user()->hasPermission('holidays', 'view') || auth()->user()->hasPermission('holidays', 'edit'))
                                 <td class="w-auto">
                                     <div class="d-flex">
+                                        @if(auth()->user()->hasPermission('holidays', 'view'))
                                         <button
                                             class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader"
                                             data-url="{{ route('holidays.show', $holiday->id) }}" title="View">
                                             <i class="fa fa-eye"></i>
                                         </button>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('holidays', 'edit'))
                                         <a href="javascript:void(0);"
                                             class="btn one-btn-outline-success btn-icon btn-sm editHolidayBtn btn-loader mx-1"
                                             data-id="{{ $holiday->id }}" data-name="{{ $holiday->name }}"
@@ -129,8 +136,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             $holiday->is_optional ? 'checked' : '' }}>
                                             <label class="custom-control-label" for="switch{{ $holiday->id }}"></label>
                                         </div>
+                                        @endif
                                     </div>
                                 </td>
+                                @endif
                                 <td>{{ $holidays->firstItem() + $loop->index }}</td>
                                 <td>{{ $holiday->name }}</td>
                                 <td>{{ $holiday->date->format('d M Y') }}</td>

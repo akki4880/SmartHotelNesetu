@@ -75,9 +75,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Employee</h3>
                 <div class="float-right">
+                    @if(auth()->user()->hasPermission('employees', 'create'))
                     <button class="btn btn-danger btn-sm btn-loader" data-toggle="modal" data-target="#createModal">
                         <i class="fa-solid fa-plus"></i> Create
                     </button>
+                    @endif
                     <button id="filterBtn" class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -90,7 +92,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
+                                @if(auth()->user()->hasPermission('employees', 'view') || auth()->user()->hasPermission('employees', 'edit'))
                                 <th>Action</th>
+                                @endif
                                 <th>Sr</th>
                                 <th>Employee Code</th>
                                 <th>Employee Name</th>
@@ -104,13 +108,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($employees as $index => $employee)
                             <tr>
+                                @if(auth()->user()->hasPermission('employees', 'view') || auth()->user()->hasPermission('employees', 'edit'))
                                 <td>
                                     <div class="d-flex align-items-center">
+                                        @if(auth()->user()->hasPermission('employees', 'view'))
                                         <button 
                                             class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader mx-1"
                                             data-url="{{ route('employees.show', $employee->id) }}" title="View">
                                             <i class="fa fa-eye"></i>
                                         </button>
+                                        @endif
+                                        @if(auth()->user()->hasPermission('employees', 'edit'))
                                         <button type="button"
                                             class="btn btn-outline-warning btn-icon btn-sm assignWeeklyOffBtn btn-loader mx-1"
                                             data-url="{{ route('employees.weekly-offs.store', $employee->id) }}"
@@ -139,8 +147,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             data-documents='@json($employee->documents)'>
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
+                                        @endif
                                     </div>
                                 </td>
+                                @endif
 
                                 <td>
                                     {{ ($employees->currentPage() - 1) * $employees->perPage() + $index + 1 }}

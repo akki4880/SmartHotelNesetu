@@ -90,9 +90,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <a href="{{ route('check-attendances') }}" class="btn btn-primary btn-sm btn-loader"><i
                             class="fa-solid fa-plus"></i>
                         Check Attendance</a>
+                    @if(auth()->user()->hasPermission('attendances', 'create'))
                     <button class="btn btn-danger btn-sm btn-loader" data-toggle="modal" data-target="#createModal"><i
                             class="fa-solid fa-plus"></i>
                         Create</button>
+                    @endif
                     <button class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -105,7 +107,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <table class="table m-0 table-bordered table-sm" id="table-example">
                         <thead class="bg-primary text-white">
                             <tr>
-                                <th>Action</th>
+                                @if(auth()->user()->hasPermission('attendances', 'view') || auth()->user()->hasPermission('attendances', 'edit'))
+                                <th>Action</th>@endif
                                 <th>Sr</th>
                                 <th>Employee</th>
                                 <th>Date</th>
@@ -119,12 +122,16 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                         <tbody>
                             @foreach($attendances as $index => $attendance)
                             <tr>
+                                @if(auth()->user()->hasPermission('attendances', 'view') || auth()->user()->hasPermission('attendances', 'edit'))
                                 <td>
+                                    @if(auth()->user()->hasPermission('attendances', 'view'))
                                     <button 
                                         class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader"
                                         data-url="{{ route('attendances.show', $attendance->id) }}" title="View">
                                         <i class="fa fa-eye"></i>
                                     </button>
+                                    @endif
+                                    @if(auth()->user()->hasPermission('attendances', 'edit'))
                                     <a href="javascript:void(0);" 
                                         class="btn one-btn-outline-success btn-icon btn-sm editAttendanceBtn btn-loader"
                                         data-id="{{ $attendance->id }}" title="Edit">
@@ -135,7 +142,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                         data-id="{{ $attendance->id }}" data-url="{{ route('attendances.destroy', $attendance->id) }}" title="Delete">
                                         <i class="fa fa-trash"></i>
                                     </button>
+                                    @endif
                                 </td>
+                                @endif
                                 <td>{{ ($attendances->currentPage() - 1) * $attendances->perPage() + $index + 1 }}</td>
                                 <td>{{ $attendance->employee->first_name ?? 'N/A' }} {{ $attendance->employee->last_name ?? 'N/A' }}</td>
                                 <td>{{ $attendance->attendance_date->format('Y-m-d') }}</td>
