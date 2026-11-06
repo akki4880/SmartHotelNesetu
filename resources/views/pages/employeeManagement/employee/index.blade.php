@@ -280,7 +280,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <select name="user_role_id" class="select2 form-control" required>
                                 <option value="">Select Role</option>
                                 @foreach($roles as $role)
-                                <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                <option value="{{ $role->id }}">{{ $role->role_name }}</option>
                                 @endforeach
                             </select>
                             <small class="text-danger error-text" data-error="user_role_id"></small>
@@ -447,7 +447,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <select name="user_role_id" id="edit_user_role_id" class="select2 form-control">
                                 <option value="">Select Role</option>
                                  @foreach($roles as $role)
-                                <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                <option value="{{ $role->id }}">{{ $role->role_name }}</option>
                                 @endforeach
                             </select>
                             <small class="text-danger error-text" data-error="user_role_id"></small>

@@ -73,7 +73,6 @@ class EmployeeController extends Controller implements HasMiddleware
         $departments = Department::where('hotel_id', auth()->user()->hotel_id)->where('status', 1)->get();
         $shifts = Shift::where('hotel_id', auth()->user()->hotel_id)->where('status', 1)->get();
         $roles = UserRole::where('hotel_id', auth()->user()->hotel_id)->where('status', 1)->get();
-dd($roles);
         return view(
             'pages.employeeManagement.employee.index',
             compact('countries', 'departments', 'shifts', 'employees', 'roles')
