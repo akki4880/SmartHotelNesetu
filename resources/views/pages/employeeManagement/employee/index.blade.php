@@ -495,9 +495,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Hidden input to track deleted document IDs -->
                             <input type="hidden" id="deleted_documents" name="deleted_documents" value="">
 
-                        </div>
-
-
+                        </div
 
                     </div>
                 </div>
@@ -736,6 +734,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
         // Track deleted document ID if it exists
         let docId = row.data('id');
+        console.log(docId);
         if (docId) {
             let deletedDocs = $('#deleted_documents').val();
             let deletedArray = deletedDocs ? deletedDocs.split(',') : [];
