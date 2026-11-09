@@ -294,6 +294,8 @@
 
             //holidays
             Route::resource('holidays', HolidayController::class);
+            Route::post('/holidays/bulk/store', [HolidayController::class, 'bulkStore'])
+                ->name('holidays.bulk-store');
             Route::post('/holidays/{id}/toggle-status', [HolidayController::class, 'toggleStatus'])
                 ->name('holidays.toggleStatus');
 

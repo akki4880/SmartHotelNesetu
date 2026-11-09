@@ -82,6 +82,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                 <h3 class="mb-0 fw-bolder">Holidays</h3>
                 <div class="float-right">
                     @if(auth()->user()->hasPermission('holidays', 'create'))
+                    <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#bulkCreateModal"><i
+                            class="fa-solid fa-plus"></i>
+                        Bulk Import</button>
                     <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#createModal"><i
                             class="fa-solid fa-plus"></i>
                         Create</button>
@@ -163,6 +166,70 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     @endif
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+<!-- Bulk Create MOdal -->
+<div class="modal fade" id="bulkCreateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h4 class="modal-title">
+                    Bulk Import Holidays
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true"><i class="fal fa-times"></i></span>
+                </button>
+            </div>
+            <form id="BulkCreateForm" action="{{ route('holidays.bulk-store') }}" method="POST" class="ajax-form"
+                data-reset="1" data-modal="#bulkCreateModal" novalidate>
+                @csrf
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Add Multiple Holidays:</strong> Enter holiday details below. Click "Add Row" to add more holidays.
+                    </div>
+
+                    <div id="bulkHolidaysContainer">
+                        <div class="row bulk-holiday-row">
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label>Holiday Name</label>
+                                    <input type="text" name="holidays[0][name]" class="form-control" placeholder="e.g. New Year" required>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" name="holidays[0][date]" class="form-control" required min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label>Type</label>
+                                    <select name="holidays[0][is_optional]" class="form-control">
+                                        <option value="0">Mandatory</option>
+                                        <option value="1">Optional</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-danger removeBulkRow" style="display:none;">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-primary mt-3" id="addBulkRow">
+                        <i class="fa fa-plus"></i> Add Row
+                    </button>
+
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="reset" class="btn btn-secondary" id="clearBulkBtn">Clear</button>
+                    <button type="submit" class="btn btn-warning" id="saveBulkBtn">Save Holidays</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -307,6 +374,72 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 @include('layouts.common-view')
 @include('layouts.confirmationModal')
 <script>
+    // Bulk holiday row management
+    let bulkRowCount = 1;
+
+    $(document).on('click', '#addBulkRow', function() {
+        let html = `
+            <div class="row bulk-holiday-row mt-2">
+                <div class="col-4">
+                    <div class="form-group">
+                        <input type="text" name="holidays[${bulkRowCount}][name]" class="form-control" placeholder="e.g. Diwali" required>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="form-group">
+                        <input type="date" name="holidays[${bulkRowCount}][date]" class="form-control" required min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="form-group">
+                        <select name="holidays[${bulkRowCount}][is_optional]" class="form-control">
+                            <option value="0">Mandatory</option>
+                            <option value="1">Optional</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-danger removeBulkRow">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $('#bulkHolidaysContainer').append(html);
+        bulkRowCount++;
+        updateRemoveButtons();
+    });
+
+    $(document).on('click', '.removeBulkRow', function(e) {
+        e.preventDefault();
+        let totalRows = $('#bulkHolidaysContainer .bulk-holiday-row').length;
+        if (totalRows > 1) {
+            $(this).closest('.bulk-holiday-row').remove();
+            updateRemoveButtons();
+        } else {
+            toastr.warning('At least one holiday is required');
+        }
+    });
+
+    function updateRemoveButtons() {
+        let totalRows = $('#bulkHolidaysContainer .bulk-holiday-row').length;
+        if (totalRows === 1) {
+            $('#bulkHolidaysContainer .removeBulkRow').hide();
+        } else {
+            $('#bulkHolidaysContainer .removeBulkRow').show();
+        }
+    }
+
+    // Initialize on modal open
+    $('#bulkCreateModal').on('show.bs.modal', function() {
+        updateRemoveButtons();
+    });
+
+    // Reset form on modal hide
+    $('#bulkCreateModal').on('hidden.bs.modal', function() {
+        bulkRowCount = 1;
+    });
+
     // When edit button is clicked
     $(document).on('click', '.editHolidayBtn', function() {
 

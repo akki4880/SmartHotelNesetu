@@ -138,6 +138,85 @@ class HolidayController extends Controller implements HasMiddleware
     }
 
     /**
+     * Bulk store holidays
+     */
+    public function bulkStore(Request $request)
+    {
+        try {
+            // ✅ Validation for bulk holidays
+            $validated = $request->validate([
+                'holidays' => 'required|array|min:1',
+                'holidays.*.name' => 'required|string|max:255',
+                'holidays.*.date' => 'required|date|after:today',
+                'holidays.*.is_optional' => 'nullable|boolean',
+            ]);
+
+            $hotelId = auth()->user()->hotel_id;
+            $successCount = 0;
+            $skipCount = 0;
+            $errors = [];
+
+            DB::beginTransaction();
+
+            foreach ($validated['holidays'] as $index => $holiday) {
+                try {
+                    // Check if holiday already exists for this date
+                    $exists = Holiday::where('hotel_id', $hotelId)
+                        ->whereDate('date', $holiday['date'])
+                        ->exists();
+
+                    if ($exists) {
+                        $skipCount++;
+                        $errors[] = "Row " . ($index + 1) . ": Holiday already exists for " . $holiday['date'];
+                        continue;
+                    }
+
+                    // Create the holiday
+                    Holiday::create([
+                        'hotel_id'     => $hotelId,
+                        'name'         => $holiday['name'],
+                        'date'         => $holiday['date'],
+                        'is_optional'  => $holiday['is_optional'] ?? false,
+                        'description'  => null,
+                    ]);
+
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errors[] = "Row " . ($index + 1) . ": " . $e->getMessage();
+                }
+            }
+
+            DB::commit();
+
+            $message = "$successCount holiday(s) created successfully";
+            if ($skipCount > 0) {
+                $message .= " ($skipCount skipped due to duplicates)";
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => $message,
+                'success_count' => $successCount,
+                'skip_count' => $skipCount,
+                'errors' => $errors
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(Holiday $holiday)
