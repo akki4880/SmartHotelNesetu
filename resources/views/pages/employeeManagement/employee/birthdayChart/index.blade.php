@@ -135,7 +135,7 @@
                         <tr class="employee-data">
 
                             <td>
-                                {{ $employee->first_name }}
+                                {{ $employee->first_name }} {{ $employee->last_name }} {{$employee?->department?->name ?? ''}}
                             </td>
 
                             @for($day = 1; $day <= $daysInMonth; $day++)
