@@ -130,6 +130,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                         <a href="javascript:void(0)"
                                             class="btn one-btn-outline-success btn-icon btn-sm editEmployeeBtn btn-loader"
                                             data-id="{{ $employee->id }}"
+                                            data-employee_code="{{ $employee->employee_code }}"
                                             data-first_name="{{ $employee->first_name }}"
                                             data-last_name="{{ $employee->last_name }}"
                                             data-phone="{{ $employee->phone }}"
@@ -593,7 +594,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     // Click to Edit Btn
     $(document).on('click', '.editEmployeeBtn', function() {
 
-        let id = $(this).data('id');
+        let id = $(this).data('id'); 
 
         let modal = $('#editModal'); // ⭐ target only edit modal
 
