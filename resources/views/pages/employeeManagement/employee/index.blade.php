@@ -484,7 +484,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <input type="number" name="salary_amount" id="edit_salary_amount" class="form-control" step="0.01" required>
                             <small class="text-danger error-text" data-error="salary_amount"></small>
                         </div>
-
+                        <!-- Hidden input to track deleted document IDs -->
+                        <input type="hidden" id="deleted_documents" name="deleted_documents" value="">
                         <div id="editDocumentContainer" class="form-group col-12">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="mb-0">Employee Documents</label>
@@ -492,18 +493,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                     <i class="fa fa-plus"></i> Add
                                 </button>
                             </div>
-                            <!-- Hidden input to track deleted document IDs -->
-                            <input type="hidden" id="deleted_documents" name="deleted_documents" value="">
+
 
                         </div
 
+                            </div>
                     </div>
-                </div>
 
-                <div class="modal-footer border-top">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
-                    <button class="btn btn-success" type="submit" id="updateEmployeeBtn">Update</button>
-                </div>
+                    <div class="modal-footer border-top">
+                        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+                        <button class="btn btn-success" type="submit" id="updateEmployeeBtn">Update</button>
+                    </div>
             </form>
         </div>
     </div>
@@ -597,7 +597,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     // Click to Edit Btn
     $(document).on('click', '.editEmployeeBtn', function() {
 
-        let id = $(this).data('id'); 
+        let id = $(this).data('id');
 
         let modal = $('#editModal'); // ⭐ target only edit modal
 
