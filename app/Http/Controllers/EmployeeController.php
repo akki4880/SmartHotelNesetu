@@ -361,7 +361,26 @@ class EmployeeController extends Controller implements HasMiddleware
                 }
             }
 
-            // 3. Add or update employee documents
+            // 3. Handle deleted documents
+            if ($request->has('deleted_documents') && $request->deleted_documents) {
+                $deletedIds = explode(',', $request->deleted_documents);
+                $deletedIds = array_filter($deletedIds); // Remove empty values
+
+                foreach ($deletedIds as $docId) {
+                    $document = EmployeeDocument::find($docId);
+                    if ($document) {
+                        // Delete physical file
+                        $filePath = public_path($document->file_path);
+                        if (file_exists($filePath)) {
+                            unlink($filePath);
+                        }
+                        // Delete database record
+                        $document->delete();
+                    }
+                }
+            }
+
+            // 4. Add or update employee documents
 
             if ($request->has('document_name')) {
 

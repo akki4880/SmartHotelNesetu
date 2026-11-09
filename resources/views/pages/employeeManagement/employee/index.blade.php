@@ -492,6 +492,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                     <i class="fa fa-plus"></i> Add
                                 </button>
                             </div>
+                            <!-- Hidden input to track deleted document IDs -->
+                            <input type="hidden" id="deleted_documents" name="deleted_documents" value="">
 
                         </div>
 
@@ -730,6 +732,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         if (totalRows <= 1) {
             toastr.warning('At least one document is required');
             return;
+        }
+
+        // Track deleted document ID if it exists
+        let docId = row.data('id');
+        if (docId) {
+            let deletedDocs = $('#deleted_documents').val();
+            let deletedArray = deletedDocs ? deletedDocs.split(',') : [];
+            if (!deletedArray.includes(String(docId))) {
+                deletedArray.push(docId);
+            }
+            $('#deleted_documents').val(deletedArray.join(','));
         }
 
         row.remove();
