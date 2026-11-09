@@ -2123,7 +2123,7 @@ $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? '
             document.querySelectorAll('.serviceCheck').forEach(cb => cb.checked = false);
 
             const availabilityFormInputs = document.querySelectorAll(
-                '#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability'
+                '#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability, #checkInTime, #checkOutTime, input[name="rate_type"]'
             );
 
             availabilityFormInputs.forEach(el => el.disabled = true);
@@ -2402,7 +2402,7 @@ $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? '
 
             // 4️⃣ Enable search inputs again
             const availabilityFormInputs = document.querySelectorAll(
-                '#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability'
+                '#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability, #checkInTime, #checkOutTime, input[name="rate_type"]'
             );
 
             availabilityFormInputs.forEach(el => el.disabled = false);
