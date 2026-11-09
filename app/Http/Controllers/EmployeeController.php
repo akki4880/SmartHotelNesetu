@@ -361,7 +361,8 @@ class EmployeeController extends Controller implements HasMiddleware
                 }
             }
 
-            // 3️⃣ Add new documents if uploaded
+            // 3. Add or update employee documents
+
             if ($request->has('document_name')) {
 
                 foreach ($request->document_name as $index => $type) {
@@ -370,20 +371,59 @@ class EmployeeController extends Controller implements HasMiddleware
                         continue;
                     }
 
-                    $folder = 'employee_documents/' . auth()->user()->hotel_id . '/' . $employee->id;
+                    $file = $request->file("document_file.$index");
 
-                    $path = $request->file("document_file.$index")
-                        ->store($folder, 'public');
+                    $folder = public_path(
+                        'employee_documents/' . auth()->user()->hotel_id . '/' . $employee->id
+                    );
 
-                    EmployeeDocument::create([
-                        'hotel_id' => auth()->user()->hotel_id,
-                        'employee_id' => $employee->id,
-                        'document_name' => $type,
-                        'file_path' => $path,
-                    ]);
+                    // Create directory if not exists
+                    if (!file_exists($folder)) {
+                        mkdir($folder, 0755, true);
+                    }
+
+                    // Generate unique filename
+                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                    // Move file directly into public folder
+                    $file->move($folder, $fileName);
+
+                    $path = 'employee_documents/' .
+                        auth()->user()->hotel_id . '/' .
+                        $employee->id . '/' .
+                        $fileName;
+
+                    // Check existing document
+                    $document = EmployeeDocument::where('employee_id', $employee->id)
+                        ->where('document_name', $type)
+                        ->first();
+
+                    if ($document) {
+
+                        // Delete old physical file
+                        $oldPath = public_path($document->file_path);
+
+                        if (file_exists($oldPath)) {
+                            unlink($oldPath);
+                        }
+
+                        // Update existing document
+                        $document->update([
+                            'file_path' => $path,
+                        ]);
+                    } else {
+
+                        // Create new document
+                        EmployeeDocument::create([
+                            'hotel_id' => auth()->user()->hotel_id,
+                            'employee_id' => $employee->id,
+                            'document_name' => $type,
+                            'file_path' => $path,
+                        ]);
+                    }
                 }
             }
-
+            
             DB::commit();
 
             return response()->json([
