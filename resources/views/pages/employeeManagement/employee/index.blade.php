@@ -41,7 +41,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <label>Email</label>
                             <input type="text" name="email" class="form-control" value="{{ request('email') }}"
                                 placeholder="Email">
-                        </div> 
+                        </div>
 
                         <!-- Department -->
                         <div class="col-md-2">
@@ -75,6 +75,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Employee</h3>
                 <div class="float-right">
+                    <a class="btn btn-primary btn-sm btn-loader" href="{{ route('employees.birthdayChart') }}">
+                        <i class="fa-solid fa-cake-candles"></i> Birthday Chart
+                    </a>
                     @if(auth()->user()->hasPermission('employees', 'create'))
                     <button class="btn btn-danger btn-sm btn-loader" data-toggle="modal" data-target="#createModal">
                         <i class="fa-solid fa-plus"></i> Create
@@ -112,7 +115,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <td>
                                     <div class="d-flex align-items-center">
                                         @if(auth()->user()->hasPermission('employees', 'view'))
-                                        <button 
+                                        <button
                                             class="btn btn-outline-primary btn-icon btn-sm view-btn btn-loader mx-1"
                                             data-url="{{ route('employees.show', $employee->id) }}" title="View">
                                             <i class="fa fa-eye"></i>
@@ -274,7 +277,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 @endforeach
                             </select>
                             <small class="text-danger error-text" data-error="shift_id"></small>
-                        </div> 
+                        </div>
 
                         <div class="form-group col-4">
                             <label>Role</label>
@@ -402,7 +405,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <input type="email" name="email" id="edit_email" class="form-control">
                             <small class="text-danger error-text" data-error="email"></small>
                         </div>
-                        
+
                         <div class="form-group col-4">
                             <label>Date of Birth</label>
                             <input type="date" name="dob" id="edit_dob" class="form-control">
@@ -447,7 +450,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <label>Role</label>
                             <select name="user_role_id" id="edit_user_role_id" class="select2 form-control" required>
                                 <option value="">Select Role</option>
-                                 @foreach($roles as $role)
+                                @foreach($roles as $role)
                                 <option value="{{ $role->id }}">{{ $role->role_name }}</option>
                                 @endforeach
                             </select>

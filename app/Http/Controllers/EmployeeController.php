@@ -10,6 +10,7 @@ use App\Models\EmployeeDocument;
 use App\Models\Shift;
 use App\Models\User;
 use App\Models\UserRole;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,7 @@ class EmployeeController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:employees,view', only: ['index', 'show']),
+            new Middleware('permission:employees,view', only: ['index', 'show', 'birthdayChart']),
             new Middleware('permission:employees,create', only: ['create', 'store']),
             new Middleware('permission:employees,edit', only: ['edit', 'update']),
         ];
@@ -39,7 +40,7 @@ class EmployeeController extends Controller implements HasMiddleware
         /* Employee Name */
         if ($request->filled('first_name')) {
             $query->where('first_name', 'like', '%' . $request->first_name . '%')
-                  ->orWhere('last_name', 'like', '%' . $request->first_name . '%');
+                ->orWhere('last_name', 'like', '%' . $request->first_name . '%');
         }
 
         /* Phone */
@@ -430,5 +431,32 @@ class EmployeeController extends Controller implements HasMiddleware
                 'error'   => $e->getMessage() // remove in production if needed
             ], 500);
         }
+    }
+
+    public function birthdayChart(Request $request)
+    {
+        $year = $request->year ?? now()->year;
+        $month = $request->month ?? now()->month;
+
+        $request->validate([
+            'year' => 'nullable|integer|min:2000|max:2100',
+            'month' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
+
+        $employees = Employee::whereNotNull('dob')
+            ->where('hotel_id', auth()->user()->hotel_id)
+            ->whereMonth('dob', $month)
+            ->orderByRaw('DAY(dob) ASC')
+            ->orderBy('first_name')
+            ->get();
+
+        return view('pages.employeeManagement.employee.birthdayChart.index', compact(
+            'employees',
+            'year',
+            'month',
+            'daysInMonth'
+        ));
     }
 }
