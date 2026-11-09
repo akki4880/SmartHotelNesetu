@@ -452,7 +452,7 @@ class EmployeeController extends Controller implements HasMiddleware
             ->orderBy('first_name')
             ->get();
 
-        return view('pages.employeeManagement.employee.birthday-chart.index', compact(
+        return view('pages.employeeManagement.employee.birthdayChart.index', compact(
             'employees',
             'year',
             'month',
