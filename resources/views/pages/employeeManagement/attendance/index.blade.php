@@ -195,10 +195,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Employee -->
                             <div class="form-group">
                                 <label>Employee </label>
-                                <select name="employee_id" class="form-control" required>
+                                <select id="create_employee_id" name="employee_id" class="form-control create-employee-select" required>
                                     <option value="">Select Employee</option>
                                     @foreach($employees as $employee)
-                                    <option value="{{ $employee->id }}">
+                                    <option value="{{ $employee->id }}" data-shift="{{ $employee->shift_id }}">
                                         {{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_code }})
                                     </option>
                                     @endforeach
@@ -210,10 +210,10 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Shift -->
                             <div class="form-group">
                                 <label>Shift</label>
-                                <select name="shift_id" class="form-control">
+                                <select id="create_shift_id" name="shift_id" class="form-control">
                                     <option value="">Select Shift</option>
                                     @foreach($shifts as $shift)
-                                    <option value="{{ $shift->id }}">{{ $shift->name }}</option>
+                                    <option value="{{ $shift->id }}" data-start="{{ $shift->start_time }}" data-end="{{ $shift->end_time }}" data-grace="{{ $shift->grace_minutes ?? 0 }}">{{ $shift->name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-danger error-text" data-error="shift_id"></small>
@@ -223,7 +223,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Attendance Date -->
                             <div class="form-group">
                                 <label>Attendance Date</label>
-                                <input type="date" name="attendance_date" class="form-control" required>
+                                <input type="date" id="create_attendance_date" name="attendance_date" class="form-control" required>
                                 <small class="text-danger error-text" data-error="attendance_date"></small>
                             </div>
                         </div>
@@ -246,7 +246,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Check In -->
                             <div class="form-group">
                                 <label>Check In</label>
-                                <input type="time" name="check_in" class="form-control">
+                                <input type="time" id="create_check_in" name="check_in" class="form-control">
                                 <small class="text-danger error-text" data-error="check_in"></small>
                             </div>
                         </div>
@@ -254,7 +254,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Check Out -->
                             <div class="form-group">
                                 <label>Check Out</label>
-                                <input type="time" name="check_out" class="form-control">
+                                <input type="time" id="create_check_out" name="check_out" class="form-control">
                                 <small class="text-danger error-text" data-error="check_out"></small>
                             </div>
                         </div>
@@ -262,7 +262,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Working Hours -->
                             <div class="form-group">
                                 <label>Working Hours</label>
-                                <input type="number" step="0.01" name="working_hours" class="form-control">
+                                <input type="number" step="0.01" id="create_working_hours" name="working_hours" class="form-control" readonly>
                                 <small class="text-danger error-text" data-error="working_hours"></small>
                             </div>
                         </div>
@@ -270,7 +270,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Overtime Hours -->
                             <div class="form-group">
                                 <label>Overtime Hours</label>
-                                <input type="number" step="0.01" name="overtime_hours" class="form-control">
+                                <input type="number" step="0.01" id="create_overtime_hours" name="overtime_hours" class="form-control" readonly>
                                 <small class="text-danger error-text" data-error="overtime_hours"></small>
                             </div>
                         </div>
@@ -278,7 +278,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Late Minutes -->
                             <div class="form-group">
                                 <label>Late Minutes</label>
-                                <input type="number" name="late_minutes" class="form-control">
+                                <input type="number" id="create_late_minutes" name="late_minutes" class="form-control" readonly>
                                 <small class="text-danger error-text" data-error="late_minutes"></small>
                             </div>
                         </div>
@@ -338,7 +338,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <select id="edit_shift_id" name="shift_id" class="form-control">
                                     <option value="">Select Shift</option>
                                     @foreach($shifts as $shift)
-                                    <option value="{{ $shift->id }}">{{ $shift->name }}</option>
+                                    <option value="{{ $shift->id }}" data-start="{{ $shift->start_time }}" data-end="{{ $shift->end_time }}" data-grace="{{ $shift->grace_minutes ?? 0 }}">{{ $shift->name }}</option>
                                     @endforeach
                                 </select>
                                 <small class="text-danger error-text" data-error="shift_id"></small>
@@ -387,7 +387,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Working Hours -->
                             <div class="form-group">
                                 <label>Working Hours</label>
-                                <input type="number" step="0.01" id="edit_working_hours" name="working_hours" class="form-control">
+                                <input type="number" step="0.01" id="edit_working_hours" name="working_hours" class="form-control" readonly>
                                 <small class="text-danger error-text" data-error="working_hours"></small>
                             </div>
                         </div>
@@ -395,7 +395,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Overtime Hours -->
                             <div class="form-group">
                                 <label>Overtime Hours</label>
-                                <input type="number" step="0.01" id="edit_overtime_hours" name="overtime_hours" class="form-control">
+                                <input type="number" step="0.01" id="edit_overtime_hours" name="overtime_hours" class="form-control" readonly>
                                 <small class="text-danger error-text" data-error="overtime_hours"></small>
                             </div>
                         </div>
@@ -403,7 +403,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <!-- Late Minutes -->
                             <div class="form-group">
                                 <label>Late Minutes</label>
-                                <input type="number" id="edit_late_minutes" name="late_minutes" class="form-control">
+                                <input type="number" id="edit_late_minutes" name="late_minutes" class="form-control" readonly>
                                 <small class="text-danger error-text" data-error="late_minutes"></small>
                             </div>
                         </div>
@@ -431,23 +431,149 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 @include('layouts.confirmationModal')
 
 <script>
+    // Build shift data map for quick access
+    const shiftData = {};
+    $('[data-start]').each(function() {
+        const $option = $(this);
+        const shiftId = $option.val();
+        shiftData[shiftId] = {
+            start: $option.data('start'),
+            end: $option.data('end'),
+            grace: parseInt($option.data('grace')) || 0
+        };
+    });
+
+    // Build employee to shift mapping
+    const employeeShifts = {};
+    $('#create_employee_id option').each(function() {
+        const shiftId = $(this).data('shift');
+        if (shiftId) {
+            employeeShifts[$(this).val()] = shiftId;
+        }
+    });
+
+    // Auto-select shift and calculate when employee is selected (Create Modal)
+    $(document).on('change', '.create-employee-select', function() {
+        const employeeId = $(this).val();
+        if (employeeId && employeeShifts[employeeId]) {
+            $('#create_shift_id').val(employeeShifts[employeeId]).change();
+        }
+    });
+
+    // Auto-select shift and calculate when employee is selected (Edit Modal)
+    $(document).on('change', '#edit_employee_id', function() {
+        const employeeId = $(this).val();
+        if (employeeId && employeeShifts[employeeId]) {
+            $('#edit_shift_id').val(employeeShifts[employeeId]).change();
+        }
+    });
+
+    // Calculate working hours, overtime, and late minutes
+    function calculateTimings(checkInStr, checkOutStr, shiftId, attendanceDate, isEditMode = false) {
+        const prefix = isEditMode ? 'edit' : 'create';
+        
+        if (!checkInStr || !checkOutStr || !shiftId || !attendanceDate) {
+            $(`#${prefix}_working_hours`).val('');
+            $(`#${prefix}_overtime_hours`).val('');
+            $(`#${prefix}_late_minutes`).val('');
+            return;
+        }
+
+        const shift = shiftData[shiftId];
+        if (!shift) return;
+
+        // Parse times
+        const [checkInHour, checkInMin] = checkInStr.split(':').map(Number);
+        const [checkOutHour, checkOutMin] = checkOutStr.split(':').map(Number);
+        const [shiftStartHour, shiftStartMin] = shift.start.split(':').map(Number);
+        const [shiftEndHour, shiftEndMin] = shift.end.split(':').map(Number);
+
+        // Create date objects
+        const dateObj = new Date(attendanceDate);
+        const checkInTime = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), checkInHour, checkInMin);
+        let checkOutTime = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), checkOutHour, checkOutMin);
+        
+        const shiftStartTime = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), shiftStartHour, shiftStartMin);
+        let shiftEndTime = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), shiftEndHour, shiftEndMin);
+
+        // Handle night shifts
+        if (shiftEndTime < shiftStartTime) {
+            shiftEndTime.setDate(shiftEndTime.getDate() + 1);
+        }
+        if (checkOutTime < checkInTime) {
+            checkOutTime.setDate(checkOutTime.getDate() + 1);
+        }
+
+        // Calculate working hours
+        const workingMinutes = (checkOutTime - checkInTime) / (1000 * 60);
+        const workingHours = parseFloat((workingMinutes / 60).toFixed(2));
+
+        // Calculate overtime
+        let overtimeHours = 0;
+        if (workingHours > 8) {
+            overtimeHours = parseFloat((workingHours - 8).toFixed(2));
+        }
+
+        // Calculate late minutes
+        let lateMinutes = 0;
+        const graceTime = new Date(shiftStartTime.getTime() + shift.grace * 60000);
+        if (checkInTime > graceTime) {
+            lateMinutes = Math.round((checkInTime - shiftStartTime) / (1000 * 60));
+        }
+
+        // Update fields
+        $(`#${prefix}_working_hours`).val(workingHours || '');
+        $(`#${prefix}_overtime_hours`).val(overtimeHours || '');
+        $(`#${prefix}_late_minutes`).val(lateMinutes || '');
+    }
+
+    // Trigger calculations when check-in, check-out, shift, or date changes (Create Modal)
+    $(document).on('change', '#create_check_in, #create_check_out, #create_shift_id, #create_attendance_date', function() {
+        const prefix = 'create';
+        const checkIn = $(`#${prefix}_check_in`).val();
+        const checkOut = $(`#${prefix}_check_out`).val();
+        const shift = $(`#${prefix}_shift_id`).val();
+        const date = $(`#${prefix}_attendance_date`).val();
+        calculateTimings(checkIn, checkOut, shift, date, false);
+    });
+
+    // Trigger calculations when check-in, check-out, shift, or date changes (Edit Modal)
+    $(document).on('change', '#edit_check_in, #edit_check_out, #edit_shift_id, #edit_attendance_date', function() {
+        const checkIn = $('#edit_check_in').val();
+        const checkOut = $('#edit_check_out').val();
+        const shift = $('#edit_shift_id').val();
+        const date = $('#edit_attendance_date').val();
+        calculateTimings(checkIn, checkOut, shift, date, true);
+    });
+
     // When edit button is clicked
     $(document).on('click', '.editAttendanceBtn', function() {
         let attendanceId = $(this).data('id');
 
         // Fetch attendance data via AJAX
         $.get('/employee-management/attendances/' + attendanceId + '/edit', function(data) {
-            // Assuming you return JSON data
             $('#edit_attendance_id').val(data.id);
             $('#edit_employee_id').val(data.employee_id);
             $('#edit_shift_id').val(data.shift_id);
             $('#edit_attendance_date').val(data.attendance_date ? data.attendance_date.split('T')[0] : '');
             $('#edit_status').val(data.status);
-            $('#edit_check_in').val(data.check_in ? data.check_in.split('T')[1].substring(0, 5) : '');
-            $('#edit_check_out').val(data.check_out ? data.check_out.split('T')[1].substring(0, 5) : '');
-            $('#edit_working_hours').val(data.working_hours);
-            $('#edit_overtime_hours').val(data.overtime_hours);
-            $('#edit_late_minutes').val(data.late_minutes);
+            
+            // Fix: Extract time properly from datetime string
+            if (data.check_in) {
+                const checkInDate = new Date(data.check_in);
+                const checkInTime = String(checkInDate.getHours()).padStart(2, '0') + ':' + String(checkInDate.getMinutes()).padStart(2, '0');
+                $('#edit_check_in').val(checkInTime);
+            }
+            
+            if (data.check_out) {
+                const checkOutDate = new Date(data.check_out);
+                const checkOutTime = String(checkOutDate.getHours()).padStart(2, '0') + ':' + String(checkOutDate.getMinutes()).padStart(2, '0');
+                $('#edit_check_out').val(checkOutTime);
+            }
+            
+            $('#edit_working_hours').val(data.working_hours || '');
+            $('#edit_overtime_hours').val(data.overtime_hours || '');
+            $('#edit_late_minutes').val(data.late_minutes || '');
             $('#edit_remarks').val(data.remarks);
 
             // Change action dynamically
@@ -455,6 +581,17 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
             // Show the edit modal
             $('#editModal').modal('show');
+            
+            // Trigger calculation after values are set
+            setTimeout(() => {
+                calculateTimings(
+                    $('#edit_check_in').val(),
+                    $('#edit_check_out').val(),
+                    data.shift_id,
+                    data.attendance_date ? data.attendance_date.split('T')[0] : '',
+                    true
+                );
+            }, 100);
         });
     });
 
@@ -482,7 +619,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         $('#confirmationModalTitle').text(title);
         $('#confirmationModalBody').html('<p>' + message + '</p>');
         $('#confirmationModal').modal('show');
-        modalButton = $('#confirmationModalConfirmBtn')[0]; // store DOM button reference
+        modalButton = $('#confirmationModalConfirmBtn')[0];
 
         // Remove previous event listeners
         $(modalButton).off('click');
@@ -504,7 +641,6 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     $('#confirmationModal').modal('hide');
                     if (response.status) {
                         toastr.success(response.message || 'Action completed successfully');
-                        // Reload the page or update the table
                         location.reload();
                     } else {
                         toastr.error(response.message || 'Something went wrong');
@@ -515,7 +651,6 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     toastr.error('An error occurred. Please try again.');
                 },
                 complete: function() {
-                    // Re-enable button and restore text
                     $(modalButton).prop('disabled', false);
                     $(modalButton).text(originalText);
                 }
