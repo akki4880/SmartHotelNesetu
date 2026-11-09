@@ -1,4 +1,3 @@
-
 @extends('layouts.master')
 
 @section('title', 'Birthday Month Chart')
@@ -20,14 +19,14 @@
                     <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>
                         {{ $y }}
                     </option>
-                @endfor
+                    @endfor
             </select>
 
             <select id="monthSelect" class="form-control">
                 @foreach(range(1, 12) as $m)
-                    <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>
-                        {{ Carbon\Carbon::create()->month($m)->format('F') }}
-                    </option>
+                <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>
+                    {{ Carbon\Carbon::create()->month($m)->format('F') }}
+                </option>
                 @endforeach
             </select>
 
@@ -109,7 +108,7 @@
 
                         @for($day = 1; $day <= $daysInMonth; $day++)
                             <th>{{ $day }}</th>
-                        @endfor
+                            @endfor
                     </tr>
 
                     <tr class="employee-header">
@@ -117,9 +116,9 @@
 
                         @for($day = 1; $day <= $daysInMonth; $day++)
                             <th>
-                                {{ Carbon\Carbon::create($year, $month, $day)->format('D') }}
+                            {{ Carbon\Carbon::create($year, $month, $day)->format('D') }}
                             </th>
-                        @endfor
+                            @endfor
                     </tr>
 
                 </thead>
@@ -128,43 +127,51 @@
 
                     @forelse($employees as $employee)
 
-                        @php
-                            $birthdayDay = Carbon\Carbon::parse($employee->dob)->day;
-                        @endphp
+                    @php
+                    $birthdayDay = Carbon\Carbon::parse($employee->dob)->day;
+                    @endphp
 
-                        <tr class="employee-data">
+                    <tr class="employee-data">
 
-                            <td>
-                                {{ $employee->first_name }} {{ $employee->last_name }} {{$employee?->department?->name ?? ''}}
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="font-weight-bold">
+                                    {{ $employee->first_name }} {{ $employee->last_name }}
+                                </span>
+
+                                <small class="text-muted">
+                                    {{ $employee?->department?->name ?? 'No Department' }}
+                                </small>
+                            </div>
+                        </td>
+
+                        @for($day = 1; $day <= $daysInMonth; $day++)
+
+                            @if($birthdayDay==$day)
+
+                            <td class="birthday-cell"
+                            title="Birthday: {{ $employee->first_name }}">
+                            <i class="fas fa-birthday-cake"></i>
                             </td>
 
-                            @for($day = 1; $day <= $daysInMonth; $day++)
+                            @else
 
-                                @if($birthdayDay == $day)
+                            <td class="normal-cell"></td>
 
-                                    <td class="birthday-cell"
-                                        title="Birthday: {{ $employee->first_name }}">
-                                        <i class="fas fa-birthday-cake"></i>
-                                    </td>
-
-                                @else
-
-                                    <td class="normal-cell"></td>
-
-                                @endif
+                            @endif
 
                             @endfor
 
-                        </tr>
+                    </tr>
 
                     @empty
 
-                        <tr>
-                            <td colspan="{{ $daysInMonth + 1 }}"
-                                class="text-center text-muted">
-                                No employee birthdays found for this month.
-                            </td>
-                        </tr>
+                    <tr>
+                        <td colspan="{{ $daysInMonth + 1 }}"
+                            class="text-center text-muted">
+                            No employee birthdays found for this month.
+                        </td>
+                    </tr>
 
                     @endforelse
 
@@ -177,10 +184,10 @@
         {{-- Legend --}}
 
         <div class="d-flex align-items-center justify-content-center mt-3"
-             style="gap: 8px;">
+            style="gap: 8px;">
 
             <span class="legend-box birthday-legend"
-                  style="border:1px solid black"></span>
+                style="border:1px solid black"></span>
 
             <span>Birthday</span>
 
