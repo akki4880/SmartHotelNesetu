@@ -47,6 +47,12 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Generate Invoice</h3>
                 <div class="float-right">
+
+                    <!-- booking -->
+                    <button class="btn btn-primary btn-sm mx-2" onclick="window.location.href='{{ route('bookings.index') }}'">
+                        <i class="fas fa-calendar-check mx-1"></i> bookings
+                    </button>
+
                     <button id="filterBtn" class="btn btn-info btn-sm" onclick="toggleFilter()">
                         <i class="fa-solid fa-filter"></i> Filter
                     </button>
@@ -70,6 +76,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <th>Check Out</th>
                                 <th>Total Hours</th>
                                 <th>Rooms</th>
+                                <th>Allotted Room</th>
                                 <th>Guests</th>
                                 <th>Status</th>
                             </tr>
@@ -201,6 +208,25 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 </td>
 
                                 <td>{{ $booking->no_of_rooms }}</td>
+
+                                <td>
+                                    @php
+                                    $allottedRooms = $booking->roomDistributions
+                                    ->filter(fn($distribution) => $distribution->room_number_id || (bool) $distribution->is_room_assigned)
+                                    ->pluck('roomNumber.room_number')
+                                    ->filter()
+                                    ->unique()
+                                    ->values();
+                                    @endphp
+
+                                    @if($allottedRooms->isNotEmpty())
+                                    @foreach($allottedRooms as $roomNumber)
+                                    <span class="badge badge-info mb-1">{{ $roomNumber }}</span>
+                                    @endforeach
+                                    @else
+                                    <span class="badge badge-secondary">Not Allotted</span>
+                                    @endif
+                                </td>
 
                                 <td>{{ $booking->no_of_guests }}</td>
                                 @php

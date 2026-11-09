@@ -570,8 +570,13 @@ $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? '
                     </form>
 
                     <!-- Create -->
-                    <button class="btn btn-danger btn-sm mx-2" data-toggle="modal" data-target="#createModal">
+                    <button class="btn btn-danger btn-sm ms-2" data-toggle="modal" data-target="#createModal">
                         <i class="fa-solid fa-plus"></i> Create
+                    </button>
+
+                    <!-- invoice -->
+                    <button class="btn btn-primary btn-sm mx-2" onclick="window.location.href='{{ route('generate-invoice') }}'">
+                        <i class="fas fa-file-invoice mx-1"></i>Generate Invoice
                     </button>
 
                     <!-- Filter -->

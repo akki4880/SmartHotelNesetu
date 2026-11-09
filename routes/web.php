@@ -206,7 +206,7 @@
         // billing
         Route::prefix('invoice-management')->group(function () {
 
-            Route::get('/generate-invoice', [InvoiceController::class, 'generate']);
+            Route::get('/generate-invoice', [InvoiceController::class, 'generate'])->name('generate-invoice');;
             Route::post('/generate-invoice', [InvoiceController::class, 'store'])->name('invoices.store');
             Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
             Route::post('/invoice-templates/select', [InvoiceTemplateController::class, 'select'])

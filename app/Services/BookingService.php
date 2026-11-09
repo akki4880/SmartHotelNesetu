@@ -7,6 +7,7 @@ use App\Models\BookingGuest;
 use App\Models\BookingGuestIdProof;
 use App\Models\BookingAdditionalService;
 use App\Models\BookingPayment;
+use App\Models\Guest;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Hotel;
@@ -16,9 +17,59 @@ use App\Models\AdditionalService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
+    private static function validateGuestNotAlreadyCheckedIn(int $hotelId, array $guests): void
+    {
+        if (empty($guests)) {
+            return;
+        }
+
+        $mobileNumbers = collect($guests)
+            ->pluck('mobile')
+            ->filter(fn ($mobile) => filled($mobile))
+            ->map(fn ($mobile) => preg_replace('/\D+/', '', (string) $mobile))
+            ->filter(fn ($mobile) => $mobile !== '')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($mobileNumbers)) {
+            return;
+        }
+
+        $guestIds = Guest::where('hotel_id', $hotelId)
+            ->whereIn('mobile', $mobileNumbers)
+            ->pluck('id');
+
+        if ($guestIds->isEmpty()) {
+            return;
+        }
+
+        $activeGuest = BookingGuest::whereIn('guest_id', $guestIds)
+            ->whereHas('booking', function ($query) use ($hotelId) {
+                $query->where('hotel_id', $hotelId)
+                    ->where('status', 'checked_in')
+                    ->whereNull('actual_check_out_at');
+            })
+            ->first();
+
+        if (!$activeGuest) {
+            return;
+        }
+
+        $guest = Guest::find($activeGuest->guest_id);
+        $guestName = $guest?->full_name ?? 'This guest';
+
+        throw ValidationException::withMessages([
+            'guests' => [
+                $guestName . ' is already checked in and has not checked out yet. A new booking is not allowed for this guest.'
+            ],
+        ]);
+    }
+
     /**
      * Create a single booking with all related records in a transaction.
      *
@@ -81,6 +132,8 @@ class BookingService
             $collectedBy = $data['collected_by'] ?? (Auth::check() ? Auth::id() : null);
             
             $rateType = self::resolveRateType($hotel, $data['rate_type'] ?? null);
+
+            self::validateGuestNotAlreadyCheckedIn($hotelId, $data['guests'] ?? []);
 
             // 1. Validate availability
             AvailabilityService::validateAvailability(
@@ -306,6 +359,8 @@ class BookingService
             if (empty($roomDetails)) {
                 throw new \Exception('At least one room type must be specified for bulk booking');
             }
+
+            self::validateGuestNotAlreadyCheckedIn($hotelId, $data['guests'] ?? []);
 
             // 1. Validate availability for each room type independently
             $totalRooms = 0;

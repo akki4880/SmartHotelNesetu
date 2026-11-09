@@ -155,6 +155,74 @@ class BookingTest extends TestCase
         $this->assertGreaterThan(0, $result['booking']->total_amount);
     }
 
+    public function test_guest_already_checked_in_cannot_create_new_booking()
+    {
+        $guest = Guest::create([
+            'hotel_id' => $this->hotel->id,
+            'full_name' => 'Checked In Guest',
+            'mobile' => '7777777777',
+            'email' => 'checkedin@example.com',
+            'country_id' => $this->countryId,
+            'state_id' => $this->stateId,
+        ]);
+
+        $booking = Booking::create([
+            'hotel_id' => $this->hotel->id,
+            'booking_code' => 'BK-10001',
+            'booking_number' => 1001,
+            'booking_type' => 'regular',
+            'check_in_date' => Carbon::today()->toDateString(),
+            'check_out_date' => Carbon::today()->addDay()->toDateString(),
+            'no_of_rooms' => 1,
+            'no_of_guests' => 2,
+            'base_amount' => 2000,
+            'discount' => 0,
+            'cgst' => 0,
+            'sgst' => 0,
+            'igst' => 0,
+            'total_amount' => 2000,
+            'status' => 'checked_in',
+            'actual_check_in_at' => now(),
+            'actual_check_out_at' => null,
+            'remark' => 'active stay',
+        ]);
+
+        $booking->bookingGuests()->create([
+            'guest_id' => $guest->id,
+            'full_name' => $guest->full_name,
+            'mobile' => $guest->mobile,
+            'email' => $guest->email,
+            'is_primary_guest' => true,
+        ]);
+
+        $bookingData = [
+            'hotel_id' => $this->hotel->id,
+            'check_in_date' => Carbon::today()->addDays(2)->toDateString(),
+            'check_out_date' => Carbon::today()->addDays(3)->toDateString(),
+            'room_type_id' => $this->roomType->id,
+            'no_of_rooms' => 1,
+            'no_of_guests' => 2,
+            'guests' => [
+                [
+                    'name' => 'Checked In Guest',
+                    'mobile' => '7777777777',
+                    'email' => 'checkedin@example.com',
+                    'country_id' => $this->countryId,
+                    'state_id' => $this->stateId,
+                    'is_primary' => true,
+                ]
+            ],
+            'additional_services' => [],
+            'discount_amount' => 0,
+            'discount_type' => null,
+            'payment' => [],
+        ];
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        BookingService::createSingleBooking($bookingData);
+    }
+
     public function test_store_persists_payment_details_sent_as_flat_fields()
     {
         $user = User::create([
