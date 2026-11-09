@@ -46,6 +46,15 @@ class AvailabilityController extends Controller
                 $checkInDateTime = Carbon::parse($request->check_in_date . ' ' . ($request->check_in_time ?? '00:00'));
                 $checkOutDateTime = Carbon::parse($request->check_out_date . ' ' . ($request->check_out_time ?? '00:00'));
 
+                if (
+                    $checkInDateTime->format('A') === 'PM' &&
+                    $checkOutDateTime->format('A') === 'AM'
+                ) {
+                    $checkOut = $checkIn->copy()->addDay();
+                    $checkOutDateTime = Carbon::parse($checkOut->toDateString() . ' ' . ($request->check_out_time ?? '00:00'));
+                    $lastNightDate = $checkOut->copy()->subDay();
+                }
+
                 $sameDayStay = Carbon::parse($request->check_in_date)->eq(Carbon::parse($request->check_out_date));
 
                 if ($sameDayStay && $checkOutDateTime->lessThanOrEqualTo($checkInDateTime)) {

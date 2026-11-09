@@ -1815,6 +1815,13 @@ $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? '
     //     this.innerHTML = 'Search';
     // });
 
+    function formatDateForInput(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     function formatTimeForInput(date) {
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -1870,14 +1877,39 @@ $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? '
         checkOutInput.min = checkInDate;
 
         if (selectedRateType === 'hourly') {
+            const checkInTime = document.getElementById('checkInTime')?.value;
+            const checkOutTime = document.getElementById('checkOutTime')?.value;
+
+            if (checkInTime && checkOutTime) {
+                const parseTimeToMinutes = (time) => {
+                    const [hours, minutes] = time.split(':').map(Number);
+                    return hours * 60 + minutes;
+                };
+
+                const checkInMinutes = parseTimeToMinutes(checkInTime);
+                const checkOutMinutes = parseTimeToMinutes(checkOutTime);
+
+                if (checkInMinutes >= 12 * 60 && checkOutMinutes < 12 * 60) {
+                    const nextDate = new Date(checkInDate + 'T00:00:00');
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    checkOutInput.value = formatDateForInput(nextDate);
+                    return;
+                }
+
+                if (checkInMinutes >= checkOutMinutes && checkOutMinutes >= 12 * 60) {
+                    checkOutInput.value = checkInDate;
+                    return;
+                }
+            }
+
             checkOutInput.value = checkInDate;
             return;
         }
 
         const currentCheckout = checkOutInput.value;
-        const nextDate = new Date(checkInDate);
+        const nextDate = new Date(checkInDate + 'T00:00:00');
         nextDate.setDate(nextDate.getDate() + 1);
-        const formattedNextDate = nextDate.toISOString().split('T')[0];
+        const formattedNextDate = formatDateForInput(nextDate);
 
         if (!currentCheckout || currentCheckout <= checkInDate) {
             checkOutInput.value = formattedNextDate;
@@ -2011,7 +2043,7 @@ $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? '
     }
 
     document.addEventListener('change', function (event) {
-        if (event.target && event.target.id === 'checkInDate') {
+        if (event.target && (event.target.id === 'checkInDate' || event.target.id === 'checkInTime' || event.target.id === 'checkOutTime')) {
             applyCheckinCheckoutDefaults();
         }
 
