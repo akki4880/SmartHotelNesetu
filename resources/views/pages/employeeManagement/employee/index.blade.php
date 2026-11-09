@@ -666,11 +666,11 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             </div>
 
             <div class="form-group col proof-actions">
-                <a href="/storage/${document.file_path}" target="_blank" class="btn btn-sm btn-info">
+                <a href="{{ asset('storage') }}/${document.file_path}" target="_blank" class="btn btn-sm btn-info">
                     <i class="fa fa-eye"></i>
                 </a>
 
-                <a href="/storage/${document.file_path}" download class="btn btn-sm btn-success">
+                <a href="{{ asset('storage') }}/${document.file_path}" download class="btn btn-sm btn-success">
                     <i class="fa fa-download"></i>
                 </a>
 
