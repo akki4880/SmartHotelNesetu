@@ -376,6 +376,7 @@ class EmployeeController extends Controller implements HasMiddleware
                         ->store($folder, 'public');
 
                     EmployeeDocument::create([
+                        'hotel_id' => auth()->user()->hotel_id,
                         'employee_id' => $employee->id,
                         'document_name' => $type,
                         'file_path' => $path,
