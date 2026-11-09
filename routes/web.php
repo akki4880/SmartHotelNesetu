@@ -280,7 +280,7 @@
 
         Route::prefix('employee-management')->group(function () {
             Route::resource('employees', EmployeeController::class);
-            Route::get('/employees/birthday-chart', [EmployeeController::class, 'birthdayChart'])
+            Route::get('/employee/birthday-chart', [EmployeeController::class, 'birthdayChart'])
                 ->name('employees.birthdayChart');
 
             Route::post('/employees/{employee}/weekly-offs', [WeeklyOffController::class, 'store'])
