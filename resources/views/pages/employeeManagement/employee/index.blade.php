@@ -495,9 +495,8 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             </div>
 
 
-                        </div
 
-                            </div>
+                        </div>
                     </div>
 
                     <div class="modal-footer border-top">
