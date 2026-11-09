@@ -445,10 +445,10 @@ class EmployeeController extends Controller implements HasMiddleware
 
         $daysInMonth = Carbon::create($year, $month, 1)->daysInMonth;
 
-        $employees = Employee::whereNotNull('birthdate')
+        $employees = Employee::whereNotNull('dob')
             ->where('hotel_id', auth()->user()->hotel_id)
-            ->whereMonth('birthdate', $month)
-            ->orderByRaw('DAY(birthdate) ASC')
+            ->whereMonth('dob', $month)
+            ->orderByRaw('DAY(dob) ASC')
             ->orderBy('first_name')
             ->get();
 
