@@ -422,7 +422,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                         <div class="form-group col-4">
                             <label>Department</label>
-                            <select name="department_id" id="edit_department_id" class="select2 form-control">
+                            <select name="department_id" id="edit_department_id" class="select2 form-control" required>
                                 <option value="">Select Department</option>
                                 @foreach($departments as $department)
                                 <option value="{{ $department->id }}">{{ $department->name }}</option>
@@ -433,7 +433,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                         <div class="form-group col-4">
                             <label>Shift</label>
-                            <select name="shift_id" id="edit_shift_id" class="select2 form-control">
+                            <select name="shift_id" id="edit_shift_id" class="select2 form-control" required>
                                 <option value="">Select Shift</option>
                                 @foreach($shifts as $shift)
                                 <option value="{{ $shift->id }}">{{ $shift->name }}</option>
@@ -444,7 +444,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                         <div class="form-group col-4">
                             <label>Role</label>
-                            <select name="user_role_id" id="edit_user_role_id" class="select2 form-control">
+                            <select name="user_role_id" id="edit_user_role_id" class="select2 form-control" required>
                                 <option value="">Select Role</option>
                                  @foreach($roles as $role)
                                 <option value="{{ $role->id }}">{{ $role->role_name }}</option>
