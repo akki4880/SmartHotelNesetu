@@ -53,6 +53,7 @@ class AvailabilityController extends Controller
                 }
 
                 $roomTypes = RoomType::with(['roomNumbers'])
+                    ->where('hotel_id', $hotel->id)
                     ->where('status', 1)
                     ->get();
 
@@ -141,6 +142,7 @@ class AvailabilityController extends Controller
                 'roomRate',
                 'seasonalRates'
             ])
+                ->where('hotel_id', $hotel->id)
                 ->where('status', 1)
                 ->get();
 
