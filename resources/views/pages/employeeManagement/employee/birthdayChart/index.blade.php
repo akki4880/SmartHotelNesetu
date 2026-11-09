@@ -129,7 +129,7 @@
                     @forelse($employees as $employee)
 
                         @php
-                            $birthdayDay = Carbon\Carbon::parse($employee->birthdate)->day;
+                            $birthdayDay = Carbon\Carbon::parse($employee->dob)->day;
                         @endphp
 
                         <tr class="employee-data">
