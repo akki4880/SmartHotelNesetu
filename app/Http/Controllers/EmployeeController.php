@@ -451,7 +451,7 @@ class EmployeeController extends Controller implements HasMiddleware
             ->orderByRaw('DAY(dob) ASC')
             ->orderBy('first_name')
             ->get();
-
+dd($employees);
         return view('pages.employeeManagement.employee.birthdayChart.index', compact(
             'employees',
             'year',
