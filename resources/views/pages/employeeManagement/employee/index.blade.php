@@ -75,7 +75,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-bolder">Employee</h3>
                 <div class="float-right">
-                    <a class="btn btn-danger btn-sm btn-loader" href="{{ route('employees.birthdayChart') }}">
+                    <a class="btn btn-primary btn-sm btn-loader" href="{{ route('employees.birthdayChart') }}">
                         <i class="fa-solid fa-cake-candles"></i> Birthday Chart
                     </a>
                     @if(auth()->user()->hasPermission('employees', 'create'))
