@@ -193,6 +193,37 @@ class BookingController extends Controller implements HasMiddleware
 
             $request->merge(['payment' => $normalizedPayment]);
 
+            $normalizedAdditionalServices = [];
+            if ($request->has('additional_services')) {
+                $normalizedAdditionalServices = $request->input('additional_services', []);
+            } elseif ($request->has('services')) {
+                $serviceIds = $request->input('services', []);
+                $serviceQtyMap = $request->input('service_qty', []);
+
+                $normalizedAdditionalServices = collect($serviceIds)
+                    ->map(function ($serviceId) use ($serviceQtyMap) {
+                        $resolvedId = is_array($serviceId)
+                            ? ($serviceId['service_id'] ?? $serviceId['id'] ?? null)
+                            : $serviceId;
+
+                        if ($resolvedId === null || $resolvedId === '') {
+                            return null;
+                        }
+
+                        $quantity = $serviceQtyMap[$resolvedId] ?? $serviceQtyMap[(string) $resolvedId] ?? 1;
+
+                        return [
+                            'service_id' => (int) $resolvedId,
+                            'quantity' => (int) max(1, $quantity),
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+            }
+
+            $request->merge(['additional_services' => $normalizedAdditionalServices]);
+
             $validated = $request->validate([
                 'check_in_date'        => 'required|date|after_or_equal:today',
                 'check_out_date'       => ['required', 'date', $rateType === 'hourly' ? 'after_or_equal:check_in_date' : 'after:check_in_date'],
@@ -339,6 +370,37 @@ class BookingController extends Controller implements HasMiddleware
             }
 
             $request->merge(['payment' => $normalizedPayment]);
+
+            $normalizedAdditionalServices = [];
+            if ($request->has('additional_services')) {
+                $normalizedAdditionalServices = $request->input('additional_services', []);
+            } elseif ($request->has('services')) {
+                $serviceIds = $request->input('services', []);
+                $serviceQtyMap = $request->input('service_qty', []);
+
+                $normalizedAdditionalServices = collect($serviceIds)
+                    ->map(function ($serviceId) use ($serviceQtyMap) {
+                        $resolvedId = is_array($serviceId)
+                            ? ($serviceId['service_id'] ?? $serviceId['id'] ?? null)
+                            : $serviceId;
+
+                        if ($resolvedId === null || $resolvedId === '') {
+                            return null;
+                        }
+
+                        $quantity = $serviceQtyMap[$resolvedId] ?? $serviceQtyMap[(string) $resolvedId] ?? 1;
+
+                        return [
+                            'service_id' => (int) $resolvedId,
+                            'quantity' => (int) max(1, $quantity),
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+            }
+
+            $request->merge(['additional_services' => $normalizedAdditionalServices]);
 
             $validated = $request->validate([
                 'check_in_date'        => 'required|date|after_or_equal:today',

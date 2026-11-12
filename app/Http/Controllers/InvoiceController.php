@@ -164,9 +164,15 @@ class InvoiceController extends Controller implements HasMiddleware
     protected function generateInvoiceNumber($hotelId)
     {
         $hotel = \App\Models\Hotel::findOrFail($hotelId);
-        $prefix = $hotel->invoice_prefix ?? 'INV';
-        $lastInvoice = Invoice::where('hotel_id', $hotelId)->orderByDesc('id')->first();
-        $nextNumber = $lastInvoice ? (int) preg_replace('/\D+/', '', $lastInvoice->invoice_number) + 1 : 1;
+        $prefix = strtoupper(trim((string) ($hotel->invoice_prefix ?? 'INV')));
+
+        $lastInvoice = Invoice::where('hotel_id', $hotelId)
+            ->orderByDesc('id')
+            ->first();
+
+        $nextNumber = $lastInvoice
+            ? ((int) preg_replace('/\D+/', '', (string) $lastInvoice->invoice_number)) + 1
+            : 1;
 
         return $prefix . '-' . str_pad((string) $nextNumber, 5, '0', STR_PAD_LEFT);
     }

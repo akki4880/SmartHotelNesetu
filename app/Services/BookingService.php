@@ -766,14 +766,17 @@ class BookingService
      */
     protected static function generateInvoiceNumber(Hotel $hotel)
     {
-        $prefix = $hotel->invoice_prefix ?? 'INV';
+        $prefix = strtoupper(trim((string) ($hotel->invoice_prefix ?? 'INV')));
+
         $lastInvoice = Invoice::where('hotel_id', $hotel->id)
             ->orderBy('id', 'desc')
             ->first();
 
-        $nextNumber = $lastInvoice ? ((int)substr($lastInvoice->invoice_number, -5)) + 1 : 1;
+        $nextNumber = $lastInvoice
+            ? ((int) preg_replace('/\D+/', '', (string) $lastInvoice->invoice_number)) + 1
+            : 1;
 
-        return $prefix . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        return $prefix . '-' . str_pad((string) $nextNumber, 5, '0', STR_PAD_LEFT);
     }
 
     /**
