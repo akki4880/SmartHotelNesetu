@@ -238,6 +238,7 @@ class AvailabilityController extends Controller
                 // Maximum rooms occupied/booked on any one night
                 $bookedRooms = (int) $bookedRoomsByNight->max();
 
+                dd($totalRooms, $dirtyRooms, $bookedRooms);
                 // Calculate availability
                 $availableRooms = max(
                     $totalRooms - $dirtyRooms - $bookedRooms,
