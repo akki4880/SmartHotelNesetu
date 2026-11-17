@@ -214,17 +214,22 @@ class AvailabilityController extends Controller
                     ->all();
 
                 $dirtyRooms = count($dirtyRoomNumbers);
-
+                // Rooms occupied by guests who have checked in but not checked out
+                $activeCheckedInRoomIds = RoomDistribution::where('hotel_id', $hotel->id)
+                    ->where('room_type_id', $roomType->id)
+                    ->whereNotNull('room_number_id')
+                    ->whereHas('booking', function ($q) {
+                        $q->where('status', 'checked_in');
+                    })
+                    ->distinct()
+                    ->pluck('room_number_id')
+                    ->toArray();
                 // Get booked room count separately for each night
                 $bookedRoomsByNight = RoomDistribution::where('hotel_id', $hotel->id)
                     ->where('room_type_id', $roomType->id)
                     ->whereNotNull('room_number_id')
                     ->whereHas('booking', function ($q) {
-                        $q->whereIn('status', [
-                            'pending',
-                            'confirmed',
-                            'checked_in'
-                        ]);
+                        $q->whereIn('status', ['pending', 'confirmed']);
                     })
                     ->whereBetween('allocation_date', [
                         $checkIn->toDateString(),
@@ -234,12 +239,13 @@ class AvailabilityController extends Controller
                     ->selectRaw('COUNT(DISTINCT room_number_id) as booked_rooms')
                     ->groupByRaw('DATE(allocation_date)')
                     ->pluck('booked_rooms');
-
                 // Maximum rooms occupied/booked on any one night
+                $activeCheckedInRooms = count($activeCheckedInRoomIds);
+
                 $bookedRooms = (int) $bookedRoomsByNight->max();
 
-                dd($totalRooms, $dirtyRooms, $bookedRooms);
-                // Calculate availability
+                $bookedRooms = $bookedRooms + $activeCheckedInRooms;
+
                 $availableRooms = max(
                     $totalRooms - $dirtyRooms - $bookedRooms,
                     0
