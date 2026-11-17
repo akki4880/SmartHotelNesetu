@@ -289,6 +289,7 @@ class InvoiceController extends Controller implements HasMiddleware
             'extra_room_charge' => $extraRoomCharge,
             'hourly_base_hours' => $hourlyBreakdown['base_hours'] ?? 0,
             'hourly_extra_hours' => $hourlyBreakdown['extra_hours'] ?? 0,
+            'hourly_extra_minutes' => $hourlyBreakdown['extra_minutes'] ?? 0,
             'total_nights' => (int) ($booking->nights ?? 1),
             'additional_services' => $additionalServices,
             'service_total' => array_sum(array_map(fn($service) => (float) ($service['amount'] ?? 0), $additionalServices)),

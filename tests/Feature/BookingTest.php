@@ -7,6 +7,7 @@ use App\Models\Hotel;
 use App\Models\RoomType;
 use App\Models\RoomNumber;
 use App\Models\RoomRate;
+use App\Models\HourlyRate;
 use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\GuestIdProof;
@@ -651,6 +652,27 @@ class BookingTest extends TestCase
         $this->assertEquals(0, $pricingResult['igst']);
 
         $this->assertEquals(7080, $pricingResult['total_amount']);
+    }
+
+    public function test_hourly_extra_duration_keeps_actual_remaining_minutes()
+    {
+        $hourlyRate = HourlyRate::create([
+            'hotel_id' => $this->hotel->id,
+            'room_type_id' => $this->roomType->id,
+            'base_hours' => 1,
+            'base_price' => 500,
+            'extra_hour_price' => 200,
+            'status' => true,
+        ]);
+
+        $checkIn = Carbon::parse('2025-01-01 10:00:00');
+        $checkOut = Carbon::parse('2025-01-01 11:05:00');
+
+        $pricing = PricingService::calculateHourlyRateCharge($hourlyRate, $checkIn, $checkOut, 1);
+
+        $this->assertSame(65, $pricing['extra_minutes']);
+        $this->assertSame(2, $pricing['extra_hours']);
+        $this->assertSame(500, $pricing['base_price']);
     }
 
     /**

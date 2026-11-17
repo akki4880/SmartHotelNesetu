@@ -131,7 +131,9 @@ class RoomChangeService
             );
 
             if ($oldRoom && $oldRoom->id) {
-                RoomNumber::where('id', $oldRoom->id)->update(['status' => 0]);
+                RoomNumber::where('id', $oldRoom->id)->update([
+                    'status' => $booking->status === 'checked_in' ? 3 : 0,
+                ]);
             }
 
             RoomDistribution::where('booking_id', $bookingId)
@@ -280,7 +282,7 @@ class RoomChangeService
                 ]);
 
             if ($booking->status === 'checked_in') {
-                RoomNumber::where('id', $selectedRoomId)->update(['status' => 0]);
+                RoomNumber::where('id', $selectedRoomId)->update(['status' => 3]);
                 RoomNumber::where('id', $newRoomNumberId)->update(['status' => 1]);
             }
 

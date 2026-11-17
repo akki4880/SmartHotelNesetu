@@ -1116,11 +1116,13 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                 // Add extra-hour surcharge as separate row when applicable
                 if (Number(res.extra_room_charge || 0) > 0) {
                     const extraHours = Number(res.hourly_extra_hours || 0);
+                    const extraMinutes = Number(res.hourly_extra_minutes || 0);
                     const extraChargePerHour = extraHours > 0 ? Number(res.extra_room_charge || 0) / extraHours : Number(res.extra_room_charge || 0);
 
                     $('#invoiceItemsBody').append(generateExtraChargeRow({
                         amount: extraChargePerHour,
                         hours: extraHours,
+                        extraMinutes: extraMinutes,
                         qty: extraHours
                     }));
                 }
@@ -1174,11 +1176,29 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
     </tr>`;
     }
 
+    function formatDurationLabel(totalMinutes = 0) {
+        const minutes = Number(totalMinutes || 0);
+
+        if (minutes <= 0) {
+            return '0h';
+        }
+
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+
+        if (hours > 0 && remainingMinutes > 0) {
+            return `${hours}h ${remainingMinutes}m`;
+        }
+
+        return hours > 0 ? `${hours}h` : `${remainingMinutes}m`;
+    }
+
     function generateExtraChargeRow(data = {}) {
         const hours = Number(data.hours || 0);
         const amount = Number(data.amount || 0);
         const qty = Number(data.qty || 1);
-        const label = hours > 0 ? `Extra Charges (${hours}h)` : 'Extra Charges';
+        const durationLabel = formatDurationLabel(Number(data.extraMinutes || 0));
+        const label = durationLabel && durationLabel !== '0h' ? `Extra Charges (${durationLabel})` : 'Extra Charges';
         const index = invoiceItemIndex++;
 
         return `

@@ -576,7 +576,7 @@ $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? '
 
                     <!-- invoice -->
                     <button class="btn btn-primary btn-sm mx-2" onclick="window.location.href='{{ route('generate-invoice') }}'">
-                        <i class="fas fa-file-invoice mx-1"></i>Generate Invoice
+                        <i class="fas fa-file-invoice mx-1"></i>Invoice
                     </button>
 
                     <!-- Filter -->
