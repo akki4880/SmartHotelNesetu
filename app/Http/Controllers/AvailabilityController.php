@@ -213,8 +213,9 @@ class AvailabilityController extends Controller
 
                 $extraGuestPrice = $roomType->roomRate->extra_guest_price ?? 0;
 
-                $date = $checkIn->copy();
-                while ($date->lte($checkOut)) {
+                $date = $checkIn->copy()->startOfDay();
+                $checkOutDate = $checkOut->copy()->startOfDay();
+                while ($date->lte($checkOutDate)) {
 
                     $rateInfo = $roomType->getRateForDate($date, $hotel);
 
