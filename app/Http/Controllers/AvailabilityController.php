@@ -233,9 +233,6 @@ class AvailabilityController extends Controller
                     $date->addDay();
                 }
 
-                dd($roomTotal);
-
-                dd($priceBreakup, $roomTotal, $extraTotal);
                 // multiply by rooms
                 $finalRoomTotal  = $roomTotal * $roomsRequired;
                 $finalExtraTotal = $extraTotal * $roomsRequired;
