@@ -39,7 +39,7 @@ class AvailabilityController extends Controller
             $lastNightDate  = $checkOut->copy()->eq($checkIn) ? $checkIn->copy() : $checkOut->copy()->subDay();
             $noOfGuests     = (int) $request->no_of_guests;
             $roomsRequired  = (int) $request->no_of_rooms;
-dd($roomsRequired);
+
             $hotel = Hotel::findOrFail(Auth::user()->hotel_id);
 
             if ($rateType === 'hourly') {
@@ -232,7 +232,7 @@ dd($roomsRequired);
 
                     $date->addDay();
                 }
-
+dd($roomsRequired);
                 // multiply by rooms
                 $finalRoomTotal  = $roomTotal * $roomsRequired;
                 $finalExtraTotal = $extraTotal * $roomsRequired;
