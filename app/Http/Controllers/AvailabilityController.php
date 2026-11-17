@@ -215,6 +215,7 @@ class AvailabilityController extends Controller
 
                 $date = $checkIn->copy()->startOfDay();
                 $checkOutDate = $checkOut->copy()->startOfDay();
+                dd($date, $checkOutDate);
                 while ($date->lte($checkOutDate)) {
 
                     $rateInfo = $roomType->getRateForDate($date, $hotel);
