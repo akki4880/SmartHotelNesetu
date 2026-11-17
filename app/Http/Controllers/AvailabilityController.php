@@ -204,7 +204,7 @@ class AvailabilityController extends Controller
                     ->count();
 
                 $availableRooms = max($readyRooms - $bookedRooms, 0);
-
+dd($availableRooms,$readyRooms,$bookedRooms);
                 /* ---------------- PRICE CALCULATION ---------------- */
 
                 $priceBreakup = [];
