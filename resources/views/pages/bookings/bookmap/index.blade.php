@@ -1002,7 +1002,7 @@
             document.getElementById('totalAmountInput').value = baseAmount.toFixed(2);
             document.getElementById('bookingFormSection').style.display = 'block';
             document.querySelectorAll('.serviceCheck').forEach(cb => cb.checked = false);
-            document.querySelectorAll('#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability').forEach(el => el.disabled = true);
+            document.querySelectorAll('#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability, #checkInTime, #checkOutTime, input[name="rate_type"]').forEach(el => el.disabled = true);
         }
 
         const addBtn = e.target.closest('.addGuestBtn');
@@ -1214,7 +1214,7 @@
 
         setTimeout(() => {
             results.style.display = 'block';
-            document.querySelectorAll('#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability').forEach(el => el.disabled = false);
+            document.querySelectorAll('#checkInDate, #checkOutDate, #noOfGuests, #noOfRooms, #searchAvailability, #checkInTime, #checkOutTime, input[name="rate_type"]').forEach(el => el.disabled = false);
             selectedRoom = null;
             baseAmount = 0;
             document.getElementById('finalAmount').innerText = '0';

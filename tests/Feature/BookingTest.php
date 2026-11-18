@@ -7,6 +7,7 @@ use App\Models\Hotel;
 use App\Models\RoomType;
 use App\Models\RoomNumber;
 use App\Models\RoomRate;
+use App\Models\HourlyRate;
 use App\Models\Booking;
 use App\Models\Guest;
 use App\Models\GuestIdProof;
@@ -153,6 +154,74 @@ class BookingTest extends TestCase
         $this->assertEquals('confirmed', $result['booking']->status);
         $this->assertEquals(1, $result['booking']->no_of_rooms);
         $this->assertGreaterThan(0, $result['booking']->total_amount);
+    }
+
+    public function test_guest_already_checked_in_cannot_create_new_booking()
+    {
+        $guest = Guest::create([
+            'hotel_id' => $this->hotel->id,
+            'full_name' => 'Checked In Guest',
+            'mobile' => '7777777777',
+            'email' => 'checkedin@example.com',
+            'country_id' => $this->countryId,
+            'state_id' => $this->stateId,
+        ]);
+
+        $booking = Booking::create([
+            'hotel_id' => $this->hotel->id,
+            'booking_code' => 'BK-10001',
+            'booking_number' => 1001,
+            'booking_type' => 'regular',
+            'check_in_date' => Carbon::today()->toDateString(),
+            'check_out_date' => Carbon::today()->addDay()->toDateString(),
+            'no_of_rooms' => 1,
+            'no_of_guests' => 2,
+            'base_amount' => 2000,
+            'discount' => 0,
+            'cgst' => 0,
+            'sgst' => 0,
+            'igst' => 0,
+            'total_amount' => 2000,
+            'status' => 'checked_in',
+            'actual_check_in_at' => now(),
+            'actual_check_out_at' => null,
+            'remark' => 'active stay',
+        ]);
+
+        $booking->bookingGuests()->create([
+            'guest_id' => $guest->id,
+            'full_name' => $guest->full_name,
+            'mobile' => $guest->mobile,
+            'email' => $guest->email,
+            'is_primary_guest' => true,
+        ]);
+
+        $bookingData = [
+            'hotel_id' => $this->hotel->id,
+            'check_in_date' => Carbon::today()->addDays(2)->toDateString(),
+            'check_out_date' => Carbon::today()->addDays(3)->toDateString(),
+            'room_type_id' => $this->roomType->id,
+            'no_of_rooms' => 1,
+            'no_of_guests' => 2,
+            'guests' => [
+                [
+                    'name' => 'Checked In Guest',
+                    'mobile' => '7777777777',
+                    'email' => 'checkedin@example.com',
+                    'country_id' => $this->countryId,
+                    'state_id' => $this->stateId,
+                    'is_primary' => true,
+                ]
+            ],
+            'additional_services' => [],
+            'discount_amount' => 0,
+            'discount_type' => null,
+            'payment' => [],
+        ];
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        BookingService::createSingleBooking($bookingData);
     }
 
     public function test_store_persists_payment_details_sent_as_flat_fields()
@@ -583,6 +652,27 @@ class BookingTest extends TestCase
         $this->assertEquals(0, $pricingResult['igst']);
 
         $this->assertEquals(7080, $pricingResult['total_amount']);
+    }
+
+    public function test_hourly_extra_duration_keeps_actual_remaining_minutes()
+    {
+        $hourlyRate = HourlyRate::create([
+            'hotel_id' => $this->hotel->id,
+            'room_type_id' => $this->roomType->id,
+            'base_hours' => 1,
+            'base_price' => 500,
+            'extra_hour_price' => 200,
+            'status' => true,
+        ]);
+
+        $checkIn = Carbon::parse('2025-01-01 10:00:00');
+        $checkOut = Carbon::parse('2025-01-01 11:05:00');
+
+        $pricing = PricingService::calculateHourlyRateCharge($hourlyRate, $checkIn, $checkOut, 1);
+
+        $this->assertSame(65, $pricing['extra_minutes']);
+        $this->assertSame(2, $pricing['extra_hours']);
+        $this->assertSame(500, $pricing['base_price']);
     }
 
     /**

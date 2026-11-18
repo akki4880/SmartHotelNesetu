@@ -114,8 +114,8 @@ class BookingController extends Controller implements HasMiddleware
         $hotelId = auth()->user()->hotel_id;
 
         $roomTypes = RoomType::with(['roomNumbers' => function ($query) {
-                $query->orderBy('room_number');
-            }])
+            $query->orderBy('room_number');
+        }])
             ->where('hotel_id', $hotelId)
             ->where('status', 1)
             ->orderBy('name')
@@ -192,6 +192,37 @@ class BookingController extends Controller implements HasMiddleware
             }
 
             $request->merge(['payment' => $normalizedPayment]);
+
+            $normalizedAdditionalServices = [];
+            if ($request->has('additional_services')) {
+                $normalizedAdditionalServices = $request->input('additional_services', []);
+            } elseif ($request->has('services')) {
+                $serviceIds = $request->input('services', []);
+                $serviceQtyMap = $request->input('service_qty', []);
+
+                $normalizedAdditionalServices = collect($serviceIds)
+                    ->map(function ($serviceId) use ($serviceQtyMap) {
+                        $resolvedId = is_array($serviceId)
+                            ? ($serviceId['service_id'] ?? $serviceId['id'] ?? null)
+                            : $serviceId;
+
+                        if ($resolvedId === null || $resolvedId === '') {
+                            return null;
+                        }
+
+                        $quantity = $serviceQtyMap[$resolvedId] ?? $serviceQtyMap[(string) $resolvedId] ?? 1;
+
+                        return [
+                            'service_id' => (int) $resolvedId,
+                            'quantity' => (int) max(1, $quantity),
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+            }
+
+            $request->merge(['additional_services' => $normalizedAdditionalServices]);
 
             $validated = $request->validate([
                 'check_in_date'        => 'required|date|after_or_equal:today',
@@ -339,6 +370,37 @@ class BookingController extends Controller implements HasMiddleware
             }
 
             $request->merge(['payment' => $normalizedPayment]);
+
+            $normalizedAdditionalServices = [];
+            if ($request->has('additional_services')) {
+                $normalizedAdditionalServices = $request->input('additional_services', []);
+            } elseif ($request->has('services')) {
+                $serviceIds = $request->input('services', []);
+                $serviceQtyMap = $request->input('service_qty', []);
+
+                $normalizedAdditionalServices = collect($serviceIds)
+                    ->map(function ($serviceId) use ($serviceQtyMap) {
+                        $resolvedId = is_array($serviceId)
+                            ? ($serviceId['service_id'] ?? $serviceId['id'] ?? null)
+                            : $serviceId;
+
+                        if ($resolvedId === null || $resolvedId === '') {
+                            return null;
+                        }
+
+                        $quantity = $serviceQtyMap[$resolvedId] ?? $serviceQtyMap[(string) $resolvedId] ?? 1;
+
+                        return [
+                            'service_id' => (int) $resolvedId,
+                            'quantity' => (int) max(1, $quantity),
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+            }
+
+            $request->merge(['additional_services' => $normalizedAdditionalServices]);
 
             $validated = $request->validate([
                 'check_in_date'        => 'required|date|after_or_equal:today',
@@ -787,7 +849,7 @@ class BookingController extends Controller implements HasMiddleware
                 // Handle custom checkout date and time
                 $checkOutDate = $request->input('checkout_date');
                 $checkOutTime = $request->input('checkout_time');
-                
+
                 if ($checkOutDate && $checkOutTime) {
                     $checkOutDateTime = Carbon::createFromFormat('Y-m-d H:i', $checkOutDate . ' ' . $checkOutTime);
                     $now = $checkOutDateTime;
@@ -997,7 +1059,7 @@ class BookingController extends Controller implements HasMiddleware
                 // Handle custom check-in date and time
                 $checkInDate = $request->input('checkin_date');
                 $checkInTime = $request->input('checkin_time');
-                
+
                 if ($checkInDate && $checkInTime) {
                     $checkInDateTime = Carbon::createFromFormat('Y-m-d H:i', $checkInDate . ' ' . $checkInTime);
                     $checkInAt = $checkInDateTime;
@@ -1007,7 +1069,13 @@ class BookingController extends Controller implements HasMiddleware
 
                 // Selected room IDs from the request
                 $roomsToAssign = array_map('intval', $request->input('rooms', []));
-
+                // Get previously assigned room IDs before swapping
+                $oldRoomIds = $booking->roomDistributions
+                    ->pluck('room_number_id')
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->toArray();
                 // Group the booking distributions by their original room
                 $distributionsByRoom = $booking->roomDistributions
                     ->groupBy('room_number_id')
@@ -1117,6 +1185,19 @@ class BookingController extends Controller implements HasMiddleware
                 }
 
                 // Mark selected rooms as occupied
+                // RoomNumber::whereIn('id', $roomsToAssign)->update([
+                //     'status' => 1,
+                // ]);
+                // Release previously assigned rooms that are no longer selected
+                $releasedRoomIds = array_diff($oldRoomIds, $roomsToAssign);
+
+                if (!empty($releasedRoomIds)) {
+                    RoomNumber::whereIn('id', $releasedRoomIds)->update([
+                        'status' => 0,
+                    ]);
+                }
+
+                // Mark newly selected rooms as occupied
                 RoomNumber::whereIn('id', $roomsToAssign)->update([
                     'status' => 1,
                 ]);
@@ -1317,7 +1398,7 @@ class BookingController extends Controller implements HasMiddleware
         $hotelRateTypes = auth()->user()->hotel?->getBookingRateOptions() ?? ['room'];
         $defaultHotelRateType = auth()->user()->hotel?->getDefaultBookingRateType() ?? 'room';
 
-        $bookings = Booking::with('roomDistributions.roomNumber', 'primaryGuest', 'roomDistributions.roomType','payments','additionalServices')
+        $bookings = Booking::with('roomDistributions.roomNumber', 'primaryGuest', 'roomDistributions.roomType', 'payments', 'additionalServices')
             ->where('hotel_id', auth()->user()->hotel_id)
             ->get();
         $roomTypes = RoomType::with('roomNumbers')

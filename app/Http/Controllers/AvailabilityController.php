@@ -46,6 +46,15 @@ class AvailabilityController extends Controller
                 $checkInDateTime = Carbon::parse($request->check_in_date . ' ' . ($request->check_in_time ?? '00:00'));
                 $checkOutDateTime = Carbon::parse($request->check_out_date . ' ' . ($request->check_out_time ?? '00:00'));
 
+                if (
+                    $checkInDateTime->format('A') === 'PM' &&
+                    $checkOutDateTime->format('A') === 'AM'
+                ) {
+                    $checkOut = $checkIn->copy()->addDay();
+                    $checkOutDateTime = Carbon::parse($checkOut->toDateString() . ' ' . ($request->check_out_time ?? '00:00'));
+                    $lastNightDate = $checkOut->copy()->subDay();
+                }
+
                 $sameDayStay = Carbon::parse($request->check_in_date)->eq(Carbon::parse($request->check_out_date));
 
                 if ($sameDayStay && $checkOutDateTime->lessThanOrEqualTo($checkInDateTime)) {
@@ -53,6 +62,7 @@ class AvailabilityController extends Controller
                 }
 
                 $roomTypes = RoomType::with(['roomNumbers'])
+                    ->where('hotel_id', $hotel->id)
                     ->where('status', 1)
                     ->get();
 
@@ -75,29 +85,75 @@ class AvailabilityController extends Controller
                         continue;
                     }
 
+                    // $totalRooms = $roomType->roomNumbers->count();
+                    // $readyRooms = $roomType->roomNumbers
+                    //     ->where('status', 0)
+                    //     ->count();
+                    // $dirtyRoomNumbers = $roomType->roomNumbers
+                    //     ->where('status', 3)
+                    //     ->pluck('room_number')
+                    //     ->values()
+                    //     ->all();
+                    // $dirtyRooms = count($dirtyRoomNumbers);
+
+                    // $bookedRooms = RoomDistribution::where('hotel_id', $hotel->id)
+                    //     ->where('room_type_id', $roomType->id)
+                    //     ->whereHas('booking', function ($q) {
+                    //         $q->whereIn('status', ['pending', 'confirmed', 'checked_in']);
+                    //     })
+                    //     ->whereBetween('allocation_date', [
+                    //         $checkIn->toDateString(),
+                    //         $lastNightDate->toDateString(),
+                    //     ])
+                    //     ->count();
+
+                    // $availableRooms = max($readyRooms - $bookedRooms, 0);
+
                     $totalRooms = $roomType->roomNumbers->count();
-                    $readyRooms = $roomType->roomNumbers
-                        ->where('status', 0)
-                        ->count();
-                    $dirtyRoomNumbers = $roomType->roomNumbers
-                        ->where('status', 3)
-                        ->pluck('room_number')
-                        ->values()
-                        ->all();
-                    $dirtyRooms = count($dirtyRoomNumbers);
 
-                    $bookedRooms = RoomDistribution::where('hotel_id', $hotel->id)
-                        ->where('room_type_id', $roomType->id)
-                        ->whereHas('booking', function ($q) {
-                            $q->whereIn('status', ['pending', 'confirmed', 'checked_in']);
-                        })
-                        ->whereBetween('allocation_date', [
-                            $checkIn->toDateString(),
-                            $lastNightDate->toDateString(),
-                        ])
-                        ->count();
+                $dirtyRoomNumbers = $roomType->roomNumbers
+                    ->where('status', 3)
+                    ->pluck('room_number')
+                    ->values()
+                    ->all();
 
-                    $availableRooms = max($readyRooms - $bookedRooms, 0);
+                $dirtyRooms = count($dirtyRoomNumbers);
+                // Rooms occupied by guests who have checked in but not checked out
+                $activeCheckedInRoomIds = RoomDistribution::where('hotel_id', $hotel->id)
+                    ->where('room_type_id', $roomType->id)
+                    ->whereNotNull('room_number_id')
+                    ->whereHas('booking', function ($q) {
+                        $q->where('status', 'checked_in');
+                    })
+                    ->distinct()
+                    ->pluck('room_number_id')
+                    ->toArray();
+                // Get booked room count separately for each night
+                $bookedRoomsByNight = RoomDistribution::where('hotel_id', $hotel->id)
+                    ->where('room_type_id', $roomType->id)
+                    ->whereNotNull('room_number_id')
+                    ->whereHas('booking', function ($q) {
+                        $q->whereIn('status', ['pending', 'confirmed']);
+                    })
+                    ->whereBetween('allocation_date', [
+                        $checkIn->toDateString(),
+                        $lastNightDate->toDateString()
+                    ])
+                    ->selectRaw('DATE(allocation_date) as stay_date')
+                    ->selectRaw('COUNT(DISTINCT room_number_id) as booked_rooms')
+                    ->groupByRaw('DATE(allocation_date)')
+                    ->pluck('booked_rooms');
+                // Maximum rooms occupied/booked on any one night
+                $activeCheckedInRooms = count($activeCheckedInRoomIds);
+
+                $bookedRooms = (int) $bookedRoomsByNight->max();
+
+                $bookedRooms = $bookedRooms + $activeCheckedInRooms;
+
+                $availableRooms = max(
+                    $totalRooms - $dirtyRooms - $bookedRooms,
+                    0
+                );
 
                     $hoursUsed = max(1, (int) ceil($checkInDateTime->diffInMinutes($checkOutDateTime) / 60));
                     $baseHours = (int) $hourlyRate->base_hours;
@@ -141,6 +197,7 @@ class AvailabilityController extends Controller
                 'roomRate',
                 'seasonalRates'
             ])
+                ->where('hotel_id', $hotel->id)
                 ->where('status', 1)
                 ->get();
 
@@ -166,34 +223,79 @@ class AvailabilityController extends Controller
 
                 /* ---------------- ROOM AVAILABILITY ---------------- */
 
+                // $totalRooms = $roomType->roomNumbers->count();
+                // $readyRooms = $roomType->roomNumbers
+                //     ->where('status', 0)
+                //     ->count();
+                // $dirtyRoomNumbers = $roomType->roomNumbers
+                //     ->where('status', 3)
+                //     ->pluck('room_number')
+                //     ->values()
+                //     ->all();
+                // $dirtyRooms = count($dirtyRoomNumbers);
+
+                // $bookedRooms = RoomDistribution::where('hotel_id', $hotel->id)
+                //     ->where('room_type_id', $roomType->id)
+                //     ->whereHas('booking', function ($q) {
+                //         $q->whereIn('status', [
+                //             'pending',
+                //             'confirmed',
+                //             'checked_in'
+                //         ]);
+                //     })
+                //     ->whereBetween('allocation_date', [
+                //         $checkIn->toDateString(),
+                //         $lastNightDate->toDateString()
+                //     ])
+                //     ->count();
+
+                // $availableRooms = max($readyRooms - $bookedRooms, 0);
+
                 $totalRooms = $roomType->roomNumbers->count();
-                $readyRooms = $roomType->roomNumbers
-                    ->where('status', 0)
-                    ->count();
+
                 $dirtyRoomNumbers = $roomType->roomNumbers
                     ->where('status', 3)
                     ->pluck('room_number')
                     ->values()
                     ->all();
-                $dirtyRooms = count($dirtyRoomNumbers);
 
-                $bookedRooms = RoomDistribution::where('hotel_id', $hotel->id)
+                $dirtyRooms = count($dirtyRoomNumbers);
+                // Rooms occupied by guests who have checked in but not checked out
+                $activeCheckedInRoomIds = RoomDistribution::where('hotel_id', $hotel->id)
                     ->where('room_type_id', $roomType->id)
+                    ->whereNotNull('room_number_id')
                     ->whereHas('booking', function ($q) {
-                        $q->whereIn('status', [
-                            'pending',
-                            'confirmed',
-                            'checked_in'
-                        ]);
+                        $q->where('status', 'checked_in');
+                    })
+                    ->distinct()
+                    ->pluck('room_number_id')
+                    ->toArray();
+                // Get booked room count separately for each night
+                $bookedRoomsByNight = RoomDistribution::where('hotel_id', $hotel->id)
+                    ->where('room_type_id', $roomType->id)
+                    ->whereNotNull('room_number_id')
+                    ->whereHas('booking', function ($q) {
+                        $q->whereIn('status', ['pending', 'confirmed']);
                     })
                     ->whereBetween('allocation_date', [
                         $checkIn->toDateString(),
                         $lastNightDate->toDateString()
                     ])
-                    ->count();
+                    ->selectRaw('DATE(allocation_date) as stay_date')
+                    ->selectRaw('COUNT(DISTINCT room_number_id) as booked_rooms')
+                    ->groupByRaw('DATE(allocation_date)')
+                    ->pluck('booked_rooms');
+                // Maximum rooms occupied/booked on any one night
+                $activeCheckedInRooms = count($activeCheckedInRoomIds);
 
-                $availableRooms = max($readyRooms - $bookedRooms, 0);
+                $bookedRooms = (int) $bookedRoomsByNight->max();
 
+                $bookedRooms = $bookedRooms + $activeCheckedInRooms;
+
+                $availableRooms = max(
+                    $totalRooms - $dirtyRooms - $bookedRooms,
+                    0
+                );
                 /* ---------------- PRICE CALCULATION ---------------- */
 
                 $priceBreakup = [];
@@ -202,9 +304,9 @@ class AvailabilityController extends Controller
 
                 $extraGuestPrice = $roomType->roomRate->extra_guest_price ?? 0;
 
-                $date = $checkIn->copy();
-
-                while ($date->lte($checkOut)) {
+                $date = $checkIn->copy()->startOfDay();
+                $checkOutDate = $checkOut->copy()->startOfDay();
+                while ($date->lt($checkOutDate)) {
 
                     $rateInfo = $roomType->getRateForDate($date, $hotel);
 

@@ -72,6 +72,7 @@ class PricingService
             'base_hours' => $baseHours,
             'actual_hours' => $actualHours,
             'extra_hours' => $extraHours,
+            'extra_minutes' => (int) $extraMinutes,
             'base_price' => round($basePrice, 2),
             'base_amount' => round($basePrice, 2),
             'extra_hour_price' => round((float) $hourlyRate->extra_hour_price, 2),

@@ -164,9 +164,15 @@ class InvoiceController extends Controller implements HasMiddleware
     protected function generateInvoiceNumber($hotelId)
     {
         $hotel = \App\Models\Hotel::findOrFail($hotelId);
-        $prefix = $hotel->invoice_prefix ?? 'INV';
-        $lastInvoice = Invoice::where('hotel_id', $hotelId)->orderByDesc('id')->first();
-        $nextNumber = $lastInvoice ? (int) preg_replace('/\D+/', '', $lastInvoice->invoice_number) + 1 : 1;
+        $prefix = strtoupper(trim((string) ($hotel->invoice_prefix ?? 'INV')));
+
+        $lastInvoice = Invoice::where('hotel_id', $hotelId)
+            ->orderByDesc('id')
+            ->first();
+
+        $nextNumber = $lastInvoice
+            ? ((int) preg_replace('/\D+/', '', (string) $lastInvoice->invoice_number)) + 1
+            : 1;
 
         return $prefix . '-' . str_pad((string) $nextNumber, 5, '0', STR_PAD_LEFT);
     }
@@ -283,6 +289,7 @@ class InvoiceController extends Controller implements HasMiddleware
             'extra_room_charge' => $extraRoomCharge,
             'hourly_base_hours' => $hourlyBreakdown['base_hours'] ?? 0,
             'hourly_extra_hours' => $hourlyBreakdown['extra_hours'] ?? 0,
+            'hourly_extra_minutes' => $hourlyBreakdown['extra_minutes'] ?? 0,
             'total_nights' => (int) ($booking->nights ?? 1),
             'additional_services' => $additionalServices,
             'service_total' => array_sum(array_map(fn($service) => (float) ($service['amount'] ?? 0), $additionalServices)),
