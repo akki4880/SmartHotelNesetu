@@ -14,6 +14,7 @@ class AuthController extends Controller
      * Login using email and password.
      */
 
+
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -22,7 +23,18 @@ class AuthController extends Controller
             'device_name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user = User::where('phone', $validated['phone'])->first();
+        $hotel = \App\Models\Hotel::where(
+            'phone',
+            $validated['phone']
+        )->first();
+
+        if (!$hotel) {
+            return response()->json([
+                'message' => 'Invalid phone number or password.',
+            ], 401);
+        }
+
+        $user = User::where('hotel_id', $hotel->id)->first();
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
@@ -37,10 +49,12 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user,
+            'hotel' => $hotel,
             'token' => $token,
             'token_type' => 'Bearer',
         ], 200);
     }
+
 
 
     /**
