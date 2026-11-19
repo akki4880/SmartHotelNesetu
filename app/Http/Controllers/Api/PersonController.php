@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Person;
+use Illuminate\Support\Facades\DB;
 
 class PersonController extends Controller
 {
@@ -72,7 +73,6 @@ class PersonController extends Controller
         ]);
     }
 
-    use Illuminate\Support\Facades\DB;
 
     public function store(Request $request)
     {
