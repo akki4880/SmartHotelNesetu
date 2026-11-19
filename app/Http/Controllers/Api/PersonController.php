@@ -72,6 +72,8 @@ class PersonController extends Controller
         ]);
     }
 
+    use Illuminate\Support\Facades\DB;
+
     public function store(Request $request)
     {
         $request->validate([
@@ -79,13 +81,17 @@ class PersonController extends Controller
             'gender' => 'required|in:Male,Female,Other',
             'mobile' => 'nullable|string|max:15',
             'address' => 'nullable|string',
-            'pairing_id' => 'nullable|integer',
             'dob' => 'nullable|date',
             'document_id' => 'required|string|max:255',
+
+            // Optional existing person ID to pair with
+            'pair_with_id' => 'nullable|integer',
 
             'documents' => 'nullable|array',
             'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
+
+        $hotelId = auth()->user()->hotel_id;
 
         $documents = [];
 
@@ -106,22 +112,55 @@ class PersonController extends Controller
             }
         }
 
-        $person = Person::create([
-            'hotel_id' => auth()->user()->hotel_id,
-            'full_name' => $request->full_name,
-            'gender' => $request->gender,
-            'mobile' => $request->mobile,
-            'address' => $request->address,
-            'pairing_id' => $request->pairing_id,
-            'dob' => $request->dob,
-            'document_id' => $request->document_id,
-            'documents' => $documents,
-        ]);
+        $person = DB::transaction(function () use ($request, $hotelId, $documents) {
+
+            $pairingId = null;
+
+            if ($request->filled('pair_with_id')) {
+
+                $existingPerson = Person::where('hotel_id', $hotelId)
+                    ->where('id', $request->pair_with_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$existingPerson) {
+                    abort(404, 'Person to pair with not found.');
+                }
+
+                // Get existing pairing ID or use first person's ID
+                $pairingId = $existingPerson->pairing_id ?? $existingPerson->id;
+
+                // Update first person with pairing ID
+                Person::where('hotel_id', $hotelId)
+                    ->where(function ($query) use ($existingPerson) {
+                        $query->where('id', $existingPerson->id);
+
+                        if ($existingPerson->pairing_id) {
+                            $query->orWhere('pairing_id', $existingPerson->pairing_id);
+                        }
+                    })
+                    ->update([
+                        'pairing_id' => $pairingId
+                    ]);
+            }
+
+            return Person::create([
+                'hotel_id' => $hotelId,
+                'full_name' => $request->full_name,
+                'gender' => $request->gender,
+                'mobile' => $request->mobile,
+                'address' => $request->address,
+                'pairing_id' => $pairingId,
+                'dob' => $request->dob,
+                'document_id' => $request->document_id,
+                'documents' => $documents,
+            ]);
+        });
 
         return response()->json([
             'status' => true,
             'message' => 'Person created successfully.',
-            'data' => $person,
+            'data' => $person->fresh(),
         ], 201);
     }
 
@@ -132,7 +171,6 @@ class PersonController extends Controller
             'gender' => 'required|in:Male,Female,Other',
             'mobile' => 'nullable|string|max:15',
             'address' => 'nullable|string',
-            'pairing_id' => 'nullable|integer',
             'dob' => 'nullable|date',
             'document_id' => 'required|string|max:255',
 
@@ -151,7 +189,6 @@ class PersonController extends Controller
             ], 404);
         }
 
-        // Existing document images
         $documents = $person->documents ?? [];
 
         $documentPath = public_path('persons/documents');
@@ -160,11 +197,10 @@ class PersonController extends Controller
             mkdir($documentPath, 0755, true);
         }
 
-        // Upload new document images
         if ($request->hasFile('documents')) {
             foreach ($request->file('documents') as $photo) {
-
-                $fileName = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+                $fileName = time() . '_' . uniqid() . '.' .
+                    $photo->getClientOriginalExtension();
 
                 $photo->move($documentPath, $fileName);
 
@@ -172,13 +208,11 @@ class PersonController extends Controller
             }
         }
 
-        // Update person
         $person->update([
             'full_name' => $request->full_name,
             'gender' => $request->gender,
             'mobile' => $request->mobile,
             'address' => $request->address,
-            'pairing_id' => $request->pairing_id,
             'dob' => $request->dob,
             'document_id' => $request->document_id,
             'documents' => $documents,
@@ -188,6 +222,71 @@ class PersonController extends Controller
             'status' => true,
             'message' => 'Person updated successfully.',
             'data' => $person->fresh(),
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $request->validate([
+            'document_number' => 'nullable|string',
+            'mobile' => 'nullable|string|max:15',
+        ]);
+
+        if (!$request->filled('document_number') && !$request->filled('mobile')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please enter a document number or mobile number.',
+            ], 422);
+        }
+
+        $hotelId = auth()->user()->hotel_id;
+
+        $query = Person::where('hotel_id', $hotelId);
+
+        $query->where(function ($q) use ($request) {
+
+            if ($request->filled('document_number')) {
+                $q->where('document_id', $request->document_number);
+            }
+
+            if ($request->filled('mobile')) {
+                if ($request->filled('document_number')) {
+                    $q->orWhere('mobile', $request->mobile);
+                } else {
+                    $q->where('mobile', $request->mobile);
+                }
+            }
+        });
+
+        $person = $query->latest()->first();
+
+        if (!$person) {
+            return response()->json([
+                'status' => true,
+                'found' => false,
+                'message' => 'No existing person found.',
+                'data' => null,
+            ]);
+        }
+
+        // Fetch all members of the matched person's group
+        if ($person->pairing_id) {
+            $persons = Person::where('hotel_id', $hotelId)
+                ->where(function ($q) use ($person) {
+                    $q->where('pairing_id', $person->pairing_id)
+                        ->orWhere('id', $person->pairing_id);
+                })
+                ->get();
+        } else {
+            $persons = collect([$person]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'found' => true,
+            'message' => 'Person details fetched successfully.',
+            'pairing_id' => $person->pairing_id,
+            'data' => $persons,
         ]);
     }
 }
