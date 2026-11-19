@@ -22,102 +22,171 @@ class PersonController extends Controller
             $query->where('mobile', 'like', '%' . $request->mobile . '%');
         }
 
-        // Search by document number stored in JSON
-        if ($request->filled('document_number')) {
-            $query->whereJsonContains('documents', [
-                'document_number' => $request->document_number
-            ]);
+        // Search by document ID
+        if ($request->filled('document_id')) {
+            $query->where('document_id', 'like', '%' . $request->document_id . '%');
         }
 
-        $persons = $query->latest()->paginate(10);
+        // Search by document number inside JSON
+        if ($request->filled('document_number')) {
+            $query->whereRaw(
+                "JSON_SEARCH(documents, 'one', ?) IS NOT NULL",
+                ['%' . $request->document_number . '%']
+            );
+        }
+
+        $persons = $query->latest()->get();
+
+        // Group paired persons together
+        $groupedPersons = $persons->groupBy(function ($person) {
+            return $person->pairing_id
+                ? 'pair_' . $person->pairing_id
+                : 'person_' . $person->id;
+        })->map(function ($group) {
+
+            return [
+                'pairing_id' => $group->first()->pairing_id,
+                'persons' => $group->values()->map(function ($person) {
+                    return [
+                        'id' => $person->id,
+                        'hotel_id' => $person->hotel_id,
+                        'pairing_id' => $person->pairing_id,
+                        'full_name' => $person->full_name,
+                        'dob' => $person->dob,
+                        'gender' => $person->gender,
+                        'mobile' => $person->mobile,
+                        'address' => $person->address,
+                        'document_id' => $person->document_id,
+                        'documents' => $person->documents,
+                        'created_at' => $person->created_at,
+                        'updated_at' => $person->updated_at,
+                    ];
+                })->values(),
+            ];
+        })->values();
 
         return response()->json([
             'status' => true,
             'message' => 'Persons fetched successfully.',
-            'data' => $persons
+            'data' => $groupedPersons,
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'id' => 'nullable|integer',
             'full_name' => 'required|string|max:255',
             'gender' => 'required|in:Male,Female,Other',
             'mobile' => 'nullable|string|max:15',
             'address' => 'nullable|string',
+            'pairing_id' => 'nullable|integer',
+            'dob' => 'nullable|date',
+            'document_id' => 'required|string|max:255',
 
             'documents' => 'nullable|array',
-            'documents.*.document_type' => 'required|string|max:100',
-            'documents.*.document_number' => 'required|string|max:100',
-            'documents.*.photos' => 'nullable|array',
-            'documents.*.photos.*' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
+            'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
-        $person = null;
-
-        if ($request->filled('id')) {
-            $person = Person::where('id', $request->id)
-                ->where('hotel_id', auth()->user()->hotel_id)
-                ->first();
-
-            if (!$person) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Person not found.',
-                ], 404);
-            }
-        }
-
-        $existingDocuments = $person?->documents ?? [];
         $documents = [];
 
-        foreach ($request->input('documents', []) as $index => $document) {
+        $documentPath = public_path('persons/documents');
 
-            $oldDocument = $existingDocuments[$index] ?? [];
-
-            $photos = $oldDocument['photos'] ?? [];
-
-            if ($request->hasFile("documents.$index.photos")) {
-                foreach ($request->file("documents.$index.photos") as $photo) {
-                    $fileName = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
-
-                    $photo->move(
-                        public_path('persons/documents'),
-                        $fileName
-                    );
-
-                    $photos[] = 'persons/documents/' . $fileName;
-                }
-            }
-
-            $documents[] = [
-                'document_type' => $document['document_type'],
-                'document_number' => $document['document_number'],
-                'photos' => $photos,
-            ];
+        if (!file_exists($documentPath)) {
+            mkdir($documentPath, 0755, true);
         }
 
-        $data = [
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $photo) {
+
+                $fileName = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+
+                $photo->move($documentPath, $fileName);
+
+                $documents[] = 'persons/documents/' . $fileName;
+            }
+        }
+
+        $person = Person::create([
             'hotel_id' => auth()->user()->hotel_id,
             'full_name' => $request->full_name,
             'gender' => $request->gender,
             'mobile' => $request->mobile,
             'address' => $request->address,
+            'pairing_id' => $request->pairing_id,
+            'dob' => $request->dob,
+            'document_id' => $request->document_id,
             'documents' => $documents,
-        ];
-
-        if ($person) {
-            $person->update($data);
-        } else {
-            $person = Person::create($data);
-        }
+        ]);
 
         return response()->json([
             'status' => true,
-            'message' => $person->wasRecentlyCreated
-                ? 'Person created successfully.'
-                : 'Person updated successfully.',
+            'message' => 'Person created successfully.',
+            'data' => $person,
+        ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'gender' => 'required|in:Male,Female,Other',
+            'mobile' => 'nullable|string|max:15',
+            'address' => 'nullable|string',
+            'pairing_id' => 'nullable|integer',
+            'dob' => 'nullable|date',
+            'document_id' => 'required|string|max:255',
+
+            'documents' => 'nullable|array',
+            'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+        ]);
+
+        $person = Person::where('id', $id)
+            ->where('hotel_id', auth()->user()->hotel_id)
+            ->first();
+
+        if (!$person) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Person not found.',
+            ], 404);
+        }
+
+        // Existing document images
+        $documents = $person->documents ?? [];
+
+        $documentPath = public_path('persons/documents');
+
+        if (!file_exists($documentPath)) {
+            mkdir($documentPath, 0755, true);
+        }
+
+        // Upload new document images
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $photo) {
+
+                $fileName = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+
+                $photo->move($documentPath, $fileName);
+
+                $documents[] = 'persons/documents/' . $fileName;
+            }
+        }
+
+        // Update person
+        $person->update([
+            'full_name' => $request->full_name,
+            'gender' => $request->gender,
+            'mobile' => $request->mobile,
+            'address' => $request->address,
+            'pairing_id' => $request->pairing_id,
+            'dob' => $request->dob,
+            'document_id' => $request->document_id,
+            'documents' => $documents,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Person updated successfully.',
             'data' => $person->fresh(),
         ]);
     }

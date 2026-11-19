@@ -9,6 +9,7 @@ class Person extends Model
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $casts = [
+        'dob' => 'date:Y-m-d',
         'documents' => 'array',
     ];
 }
