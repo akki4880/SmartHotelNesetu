@@ -18,8 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/housekeeping', [HousekeepingController::class, 'index']);
     Route::get('/guest', [GuestController::class, 'index']);
 
-    Route::get('/persons', [PersonController::class, 'index']);
-    Route::post('/persons/store', [PersonController::class, 'store']);
+    Route::resource('/persons', [PersonController::class, 'index']);
 
     Route::patch('/housekeeping/room-status', [
         HousekeepingController::class,
