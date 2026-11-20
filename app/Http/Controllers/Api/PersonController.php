@@ -137,6 +137,8 @@ class PersonController extends Controller
             'dob' => 'nullable|date',
             'document_id' => 'required|string|max:255',
 
+            'pairing_id' => 'nullable|integer',
+
             'documents' => 'nullable|array',
             'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
@@ -178,6 +180,7 @@ class PersonController extends Controller
             'address' => $request->address,
             'dob' => $request->dob,
             'document_id' => $request->document_id,
+            'pairing_id' => $request->has('pairing_id') ? $request->pairing_id : $person->pairing_id,
             'documents' => $documents,
         ]);
 
@@ -250,6 +253,71 @@ class PersonController extends Controller
             'message' => 'Person details fetched successfully.',
             'pairing_id' => $person->pairing_id,
             'data' => $persons,
+        ]);
+    }
+
+    public function updatePairing(Request $request, $id)
+    {
+        $request->validate([
+            'pairing_id' => 'nullable|integer',
+            'pair_with_id' => 'nullable|integer',
+        ]);
+
+        $hotelId = auth()->user()->hotel_id;
+        $person = Person::where('hotel_id', $hotelId)
+            ->where('id', $id)
+            ->first();
+
+        if (!$person) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Person not found.',
+            ], 404);
+        }
+
+        $targetId = $request->has('pairing_id')
+            ? $request->pairing_id
+            : $request->pair_with_id;
+
+        if ($targetId === null) {
+            $person->update(['pairing_id' => null]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Person unpaired successfully.',
+                'data' => $person->fresh(),
+            ]);
+        }
+
+        $target = Person::where('hotel_id', $hotelId)
+            ->where('id', $targetId)
+            ->first();
+
+        if (!$target) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Person to pair with not found.',
+            ], 404);
+        }
+
+        $pairingId = $target->pairing_id ?? $target->id;
+
+        DB::transaction(function () use ($hotelId, $person, $target, $pairingId) {
+            Person::where('hotel_id', $hotelId)
+                ->where(function ($query) use ($person, $target, $pairingId) {
+                    $query->where('id', $person->id)
+                        ->orWhere('id', $target->id)
+                        ->orWhere('pairing_id', $pairingId)
+                        ->orWhere('pairing_id', $person->pairing_id);
+                })
+                ->update(['pairing_id' => $pairingId]);
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Pairing updated successfully.',
+            'data' => $person->fresh(),
+            'pairing_id' => $pairingId,
         ]);
     }
 }

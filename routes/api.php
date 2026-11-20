@@ -24,6 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('/persons', PersonController::class);
     Route::get('/person/search', [PersonController::class, 'search']);
+    Route::patch('/persons/{id}/pairing', [PersonController::class, 'updatePairing']);
+    Route::put('/persons/{id}/pairing', [PersonController::class, 'updatePairing']);
 
     Route::get('/housekeeping', [HousekeepingController::class, 'index']);
     Route::patch('/housekeeping/room-status', [
