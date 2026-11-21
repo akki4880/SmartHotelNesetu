@@ -25,14 +25,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->only('email', 'password');
+        $credentials = $request->only('phone', 'password');
 
         // Attempt to get the user first
-        $user = \App\Models\User::where('email', $credentials['email'])->first();
+        $user = \App\Models\User::where('phone', $credentials['phone'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return back()->withErrors([
-                'email' => 'Invalid credentials.'
+                'phone' => 'Invalid credentials.'
             ]);
         }
 
@@ -42,13 +42,13 @@ class AuthenticatedSessionController extends Controller
 
             if (!$hotel) {
                 return back()->withErrors([
-                    'email' => 'No hotel associated with your account. Contact SmartHotel.'
+                    'phone' => 'No hotel associated with your account. Contact SmartHotel.'
                 ]);
             }
 
             if (!$hotel->status) {
                 return back()->withErrors([
-                    'email' => 'Your hotel account is inactive: ' . ($hotel->blocked_reason ?? 'No reason provided.')
+                    'phone' => 'Your hotel account is inactive: ' . ($hotel->blocked_reason ?? 'No reason provided.')
                 ]);
             }
 
@@ -56,7 +56,7 @@ class AuthenticatedSessionController extends Controller
 
             if (!$subscription) {
                 return back()->withErrors([
-                    'email' => 'No subscription found. Please contact SmartHotel.'
+                    'phone' => 'No subscription found. Please contact SmartHotel.'
                 ]);
             }
 
@@ -67,7 +67,7 @@ class AuthenticatedSessionController extends Controller
 
             if ($today->lt($start) || $today->gt($end)) {
                 return back()->withErrors([
-                    'email' => 'Your subscription is not active. Please contact SmartHotel.'
+                    'phone' => 'Your subscription is not active. Please contact SmartHotel.'
                 ]);
             }
         }
