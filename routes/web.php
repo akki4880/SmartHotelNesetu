@@ -1,4 +1,4 @@
-    <?php
+<?php
 
     use App\Http\Controllers\AdditionalServiceController;
     use App\Http\Controllers\AdminController;
@@ -50,6 +50,7 @@
     use App\Http\Controllers\UserRoleController;
     use Illuminate\Support\Facades\Route;
     use App\Http\Controllers\DeveloperController;
+    use App\Http\Controllers\PersonController;
 
     Route::get('/', [FrontendController::class, 'home']);
     Route::get('/about-us', [FrontendController::class, 'aboutUs']);
@@ -168,8 +169,7 @@
 
         // guest 
         Route::resource('guests', GuestController::class);
-        Route::get('/guest/find', [GuestController::class, 'find'])
-            ->name('guest.find');
+        Route::resource('persons', PersonController::class);
 
         // agent 
         Route::resource('agents', AgentController::class);
