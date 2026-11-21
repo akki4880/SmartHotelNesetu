@@ -16,6 +16,7 @@ class AuthController extends Controller
      */
 
 
+
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -24,18 +25,8 @@ class AuthController extends Controller
             'device_name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $hotel = \App\Models\Hotel::where(
-            'phone',
-            $validated['phone']
-        )->first();
-
-        if (!$hotel) {
-            return response()->json([
-                'message' => 'Invalid phone number or password.',
-            ], 401);
-        }
-
-        $user = User::where('hotel_id', $hotel->id)->first();
+        // Find user using phone from users table
+        $user = User::where('phone', $validated['phone'])->first();
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json([
@@ -43,6 +34,46 @@ class AuthController extends Controller
             ], 401);
         }
 
+        // Check hotel and subscription for client roles
+        if ($user->user_role_id >= 3) {
+
+            $hotel = $user->hotel;
+
+            if (!$hotel) {
+                return response()->json([
+                    'message' => 'No hotel associated with your account. Contact SmartHotel.',
+                ], 403);
+            }
+
+            if (!$hotel->status) {
+                return response()->json([
+                    'message' => 'Your hotel account is inactive: ' .
+                        ($hotel->blocked_reason ?? 'No reason provided.'),
+                ], 403);
+            }
+
+            $subscription = $hotel->subscription;
+
+            if (!$subscription) {
+                return response()->json([
+                    'message' => 'No subscription found. Please contact SmartHotel.',
+                ], 403);
+            }
+
+            // Check subscription validity
+            $today = now()->startOfDay();
+
+            $start = \Carbon\Carbon::parse($subscription->start_date)->startOfDay();
+            $end = \Carbon\Carbon::parse($subscription->end_date)->endOfDay();
+
+            if ($today->lt($start) || $today->gt($end)) {
+                return response()->json([
+                    'message' => 'Your subscription is not active. Please contact SmartHotel.',
+                ], 403);
+            }
+        }
+
+        // Generate Sanctum token
         $token = $user->createToken(
             $validated['device_name'] ?? 'smarthotel-mobile'
         )->plainTextToken;
@@ -50,13 +81,14 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user,
-            'hotel' => $hotel,
+            'hotel' => $user->hotel,
             'token' => $token,
             'token_type' => 'Bearer',
         ], 200);
     }
 
-     public function refreshToken(Request $request)
+
+    public function refreshToken(Request $request)
     {
         $request->validate([
             'refresh_token' => 'required',
