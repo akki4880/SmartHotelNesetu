@@ -256,6 +256,7 @@ class PersonController extends Controller
         ]);
     }
 
+
     public function updatePairing(Request $request, $id)
     {
         $request->validate([
@@ -264,9 +265,9 @@ class PersonController extends Controller
         ]);
 
         $hotelId = auth()->user()->hotel_id;
+
         $person = Person::where('hotel_id', $hotelId)
-            ->where('id', $id)
-            ->first();
+            ->find($id);
 
         if (!$person) {
             return response()->json([
@@ -279,8 +280,12 @@ class PersonController extends Controller
             ? $request->pairing_id
             : $request->pair_with_id;
 
+        // Unpair selected person only
         if ($targetId === null) {
-            $person->update(['pairing_id' => null]);
+
+            $person->update([
+                'pairing_id' => null,
+            ]);
 
             return response()->json([
                 'status' => true,
@@ -289,9 +294,16 @@ class PersonController extends Controller
             ]);
         }
 
+        // Prevent self-pairing
+        if ((int) $targetId === (int) $person->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'A person cannot be paired with themselves.',
+            ], 422);
+        }
+
         $target = Person::where('hotel_id', $hotelId)
-            ->where('id', $targetId)
-            ->first();
+            ->find($targetId);
 
         if (!$target) {
             return response()->json([
@@ -300,24 +312,33 @@ class PersonController extends Controller
             ], 404);
         }
 
-        $pairingId = $target->pairing_id ?? $target->id;
+        DB::transaction(function () use ($hotelId, $person, $target) {
 
-        DB::transaction(function () use ($hotelId, $person, $target, $pairingId) {
+            // Get the existing group IDs
+            $personGroupId = $person->pairing_id ?? $person->id;
+            $targetGroupId = $target->pairing_id ?? $target->id;
+
+            // Use target's existing group as the final group
+            $finalPairingId = $targetGroupId;
+
+            // Merge both groups into one group
             Person::where('hotel_id', $hotelId)
-                ->where(function ($query) use ($person, $target, $pairingId) {
+                ->where(function ($query) use ($personGroupId, $targetGroupId, $person, $target) {
                     $query->where('id', $person->id)
                         ->orWhere('id', $target->id)
-                        ->orWhere('pairing_id', $pairingId)
-                        ->orWhere('pairing_id', $person->pairing_id);
+                        ->orWhere('pairing_id', $personGroupId)
+                        ->orWhere('pairing_id', $targetGroupId);
                 })
-                ->update(['pairing_id' => $pairingId]);
+                ->update([
+                    'pairing_id' => $finalPairingId,
+                ]);
         });
 
         return response()->json([
             'status' => true,
             'message' => 'Pairing updated successfully.',
             'data' => $person->fresh(),
-            'pairing_id' => $pairingId,
+            'pairing_id' => $person->fresh()->pairing_id,
         ]);
     }
 }
