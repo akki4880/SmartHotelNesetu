@@ -321,7 +321,7 @@ class PersonController extends Controller
             'status' => true,
             'message' => 'Person assigned successfully.',
             'data' => $person->fresh(),
-            'pairing_id' => $pairingId,
+            // 'pairing_id' => $pairingId,
         ]);
     }
 }
