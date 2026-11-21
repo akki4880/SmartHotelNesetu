@@ -68,6 +68,10 @@ class AdminController extends Controller implements HasMiddleware
                     'value' => $admin->email,
                 ],
                 [
+                    'label' => 'Admin Phone',
+                    'value' => $admin->phone,
+                ],
+                [
                     'label' => 'Permissions',
                     'value' => $admin->permissions
                         ? collect($admin->permissions)->map(function ($actions, $module) {
@@ -89,6 +93,7 @@ class AdminController extends Controller implements HasMiddleware
         $request->validate([
             'name'                  => 'required|string|max:255',
             'email'                 => 'required|email|unique:users,email',
+            'phone'                 => 'required|string|unique:users,phone',
             'password'              => 'required|string|min:6|confirmed',
             'user_role_id'          => 'required|integer',
             'permissions'           => 'nullable|array',
@@ -100,6 +105,7 @@ class AdminController extends Controller implements HasMiddleware
             $user = User::create([
                 'name'          => $request->name,
                 'email'         => $request->email,
+                'phone'         => $request->phone,
                 'password'      => Hash::make($request->password),
                 'user_role_id'  => $request->user_role_id,
                 'permissions'   => $permissions,
@@ -145,6 +151,7 @@ class AdminController extends Controller implements HasMiddleware
         $request->validate([
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email,' . $admin->id,
+            'phone'       => 'required|string|unique:users,phone,' . $admin->id,
             'permissions' => 'nullable|array',
         ]);
 
@@ -152,6 +159,7 @@ class AdminController extends Controller implements HasMiddleware
             $admin->update([
                 'name'        => $request->name,
                 'email'       => $request->email,
+                'phone'       => $request->phone,
                 'permissions' => $request->permissions ? $request->permissions : [],
             ]);
 
