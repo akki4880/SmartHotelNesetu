@@ -112,7 +112,7 @@ class HotelController extends Controller implements HasMiddleware
         $request->validate([
             // Hotel
             'hotel_name'   => 'required|string|max:255',
-            'phone'        => 'required|string|max:20',
+            // 'phone'        => 'required|string|max:20',
             'city'         => 'nullable|string|max:100',
 
             // Subscription
@@ -121,6 +121,7 @@ class HotelController extends Controller implements HasMiddleware
             // Admin
             'admin_name'   => 'required|string|max:255',
             'admin_email'  => 'required|email|unique:users,email',
+            'phone'        => 'required|string|unique:users,phone',
             'password'     => 'required|min:6|confirmed',
         ]);
 
@@ -155,6 +156,7 @@ class HotelController extends Controller implements HasMiddleware
             User::create([
                 'name'         => $request->admin_name,
                 'email'        => $request->admin_email,
+                'phone'        => $request->phone,
                 'password'     => Hash::make($request->password),
                 'user_role_id' => 3, // hotel admin role id
                 'hotel_id'     => $hotel->id,
@@ -199,6 +201,10 @@ class HotelController extends Controller implements HasMiddleware
                 [
                     'label' => 'Admin Email',
                     'value' => $hotel->admin ? $hotel->admin->email : 'N/A',
+                ],
+                [
+                    'label' => 'Admin Phone',
+                    'value' => $hotel->admin ? $hotel->admin->phone : 'N/A',
                 ],
                 [
                     'label' => 'Subscription Plan',
@@ -260,7 +266,7 @@ class HotelController extends Controller implements HasMiddleware
         $hotel = Hotel::with('admin')->findOrFail($id);
         $request->validate([
             'hotel_name'   => 'required|string|max:150',
-            'phone'        => 'required|string|max:20',
+            'phone'        => 'required|string|max:20|unique:users,phone,' . $hotel->admin->id,
             'city'         => 'nullable|string|max:100',
             'plan_id'      => 'required|exists:plans,id',
 
@@ -284,6 +290,7 @@ class HotelController extends Controller implements HasMiddleware
             $admin = $hotel->admin;
             $admin->name  = $request->admin_name;
             $admin->email = $request->admin_email;
+            $admin->phone = $request->phone;
             $admin->save();
 
             // 🔹 Subscription
