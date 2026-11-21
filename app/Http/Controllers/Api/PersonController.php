@@ -274,10 +274,11 @@ class PersonController extends Controller
             ], 404);
         }
 
-        $targetId = $request->input('pair_with_id')
-            ?? $request->input('pairing_id');
+        $targetId = $request->has('pairing_id')
+            ? $request->input('pairing_id')
+            : $request->input('pair_with_id');
 
-        // Unpair only selected person
+        // Unpair selected person
         if ($targetId === null) {
             $person->update([
                 'pairing_id' => null,
@@ -308,20 +309,24 @@ class PersonController extends Controller
 
         DB::transaction(function () use ($person, $target) {
 
-            // Use target's existing group ID or target's own ID
+            // Use existing target pairing ID or target's own ID
             $pairingId = $target->pairing_id ?? $target->id;
 
-            // Assign ONLY the selected person
-            $person->update([
-                'pairing_id' => $pairingId,
-            ]);
+            // Assign the same pairing ID to both selected people
+            Person::where('hotel_id', $person->hotel_id)
+                ->whereIn('id', [$person->id, $target->id])
+                ->update([
+                    'pairing_id' => $pairingId,
+                ]);
         });
+
+        $person->refresh();
 
         return response()->json([
             'status' => true,
-            'message' => 'Person assigned successfully.',
-            'data' => $person->fresh(),
-            // 'pairing_id' => $pairingId,
+            'message' => 'Pairing updated successfully.',
+            'data' => $person,
+            'pairing_id' => $person->pairing_id,
         ]);
     }
 }
