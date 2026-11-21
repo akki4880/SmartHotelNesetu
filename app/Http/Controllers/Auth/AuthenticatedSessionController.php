@@ -25,6 +25,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        dd($request->all());
         $credentials = $request->only('phone', 'password');
 
         // Attempt to get the user first
