@@ -84,9 +84,6 @@ class PersonController extends Controller
             'dob' => 'nullable|date',
             'document_id' => 'required|string|max:255',
 
-            // Optional existing person ID to pair with
-            'pair_with_id' => 'nullable|integer',
-
             'documents' => 'nullable|array',
             'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
@@ -112,50 +109,16 @@ class PersonController extends Controller
             }
         }
 
-        $person = DB::transaction(function () use ($request, $hotelId, $documents) {
-
-            $pairingId = null;
-
-            if ($request->filled('pair_with_id')) {
-
-                $existingPerson = Person::where('hotel_id', $hotelId)
-                    ->where('id', $request->pair_with_id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (!$existingPerson) {
-                    abort(404, 'Person to pair with not found.');
-                }
-
-                // Get existing pairing ID or use first person's ID
-                $pairingId = $existingPerson->pairing_id ?? $existingPerson->id;
-
-                // Update first person with pairing ID
-                Person::where('hotel_id', $hotelId)
-                    ->where(function ($query) use ($existingPerson) {
-                        $query->where('id', $existingPerson->id);
-
-                        if ($existingPerson->pairing_id) {
-                            $query->orWhere('pairing_id', $existingPerson->pairing_id);
-                        }
-                    })
-                    ->update([
-                        'pairing_id' => $pairingId
-                    ]);
-            }
-
-            return Person::create([
-                'hotel_id' => $hotelId,
-                'full_name' => $request->full_name,
-                'gender' => $request->gender,
-                'mobile' => $request->mobile,
-                'address' => $request->address,
-                'pairing_id' => $pairingId,
-                'dob' => $request->dob,
-                'document_id' => $request->document_id,
-                'documents' => $documents,
-            ]);
-        });
+        $person = Person::create([
+            'hotel_id' => $hotelId,
+            'full_name' => $request->full_name,
+            'gender' => $request->gender,
+            'mobile' => $request->mobile,
+            'address' => $request->address,
+            'dob' => $request->dob,
+            'document_id' => $request->document_id,
+            'documents' => $documents,
+        ]);
 
         return response()->json([
             'status' => true,

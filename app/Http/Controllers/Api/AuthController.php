@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -55,7 +56,59 @@ class AuthController extends Controller
         ], 200);
     }
 
+     public function refreshToken(Request $request)
+    {
+        $request->validate([
+            'refresh_token' => 'required',
+            'device_id' => 'required'
+        ]);
 
+        $record = DB::table('refreshtokens')
+            ->where('device_id', $request->device_id)
+            ->first();
+
+        if (!$record) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Refresh token not found'
+            ], 404);
+        }
+
+        if (now()->gt($record->expires_at)) {
+            DB::table('refreshtokens')->where('id', $record->id)->delete();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Refresh token expired. Login again.'
+            ], 401);
+        }
+
+        if (!Hash::check($request->refresh_token, $record->token)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid refresh token'
+            ], 401);
+        }
+
+        $user = User::find($record->user_id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        // revoke old access tokens
+        $user->tokens()->delete();
+
+        $newAccessToken = $user->createToken('access_token')->plainTextToken;
+
+        return response()->json([
+            'status' => true,
+            'token' => $newAccessToken
+        ]);
+    }
 
     /**
      * Logout by revoking the current access token.
@@ -157,7 +210,6 @@ class AuthController extends Controller
             ]);
 
             $fields = [];
-            $newEmail = null;
 
             if ($request->has('name')) {
                 $fields['name'] = $request->name;
@@ -168,43 +220,7 @@ class AuthController extends Controller
             }
 
             if ($request->has('email')) {
-                $newEmail = trim($request->email);
-
-                if ($newEmail !== $user->email) {
-                    $existingOtp = DB::table('otps')->where('phone', $user->phone)->first();
-                    $otp = random_int(100000, 999999);
-
-                    DB::table('otps')->updateOrInsert(
-                        ['phone' => $user->phone],
-                        [
-                            'otp' => Hash::make($otp),
-                            'attempts' => 0,
-                            'expires_at' => now()->addMinutes(5),
-                            'type' => 'email_change',
-                            'new_email' => $newEmail,
-                            'updated_at' => now(),
-                            'created_at' => $existingOtp ? $existingOtp->created_at : now(),
-                        ]
-                    );
-
-                    Mail::raw("Your OTP for email change is {$otp}", function ($message) use ($newEmail) {
-                        $message->to($newEmail)->subject('Email Change OTP');
-                    });
-
-                    if (!empty($fields)) {
-                        $user->update($fields);
-                    }
-
-                    return response()->json([
-                        'status' => true,
-                        'message' => 'Profile update request received. Please verify the OTP sent to your new email address.',
-                        'data' => [
-                            'name' => $user->fresh()->name,
-                            'email' => $user->email,
-                            'phone' => $user->fresh()->phone,
-                        ],
-                    ]);
-                }
+                $fields['email'] = trim($request->email);
             }
 
             if (empty($fields)) {

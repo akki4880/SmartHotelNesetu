@@ -12,13 +12,13 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 });
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
     Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
     Route::post('/logout', [AuthController::class, 'logout']);
-
 
     Route::get('/guest', [GuestController::class, 'index']);
 
