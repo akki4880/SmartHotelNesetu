@@ -447,7 +447,7 @@
         <p class="sub">Sign in to your SmartHotel dashboard</p>
 
         <!-- Error alert (hidden by default) --> 
-         @error('email')  
+         @error('phone')  
         <div class="login-error-alert" id="loginError">
           <i class="bi bi-exclamation-circle-fill"></i>
           <span id="loginErrorMsg">{{ $message }}</span> 
@@ -455,15 +455,15 @@
         @enderror
         <form method="POST" action="{{ route('login') }}">
           @csrf
-          <!-- Email -->
+          <!-- Phone -->
           <div class="login-form-group">
-            <label for="loginEmail">Email Address</label>
+            <label for="loginPhone">Phone Number</label>
             <div class="login-input-wrap">
-              <i class="bi bi-envelope input-icon"></i>
-              <input type="email" id="loginEmail" name="email" placeholder="you@hotel.com" autocomplete="email" required />
+              <i class="bi bi-telephone input-icon"></i>
+              <input type="tel" id="loginPhone" name="phone" placeholder="123-456-7890" autocomplete="phone" required />
              
             </div>
-            <div class="invalid-msg" id="emailErr">Please enter a valid email address.</div>
+            <div class="invalid-msg" id="phoneErr">Please enter a valid phone number.</div>
           </div>
 
           <!-- Password -->
