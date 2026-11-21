@@ -495,11 +495,7 @@
           <button type="submit" class="btn-login" id="loginBtn">
             <i class="bi bi-box-arrow-in-right"></i> Sign In
           </button>
-        </form> 
-
-        <div class="login-footer">
-          New to SmartHotel? <a href="contact.html">Start your free 14-day trial</a>
-        </div>
+        </form>  
       </div>
 
     </div>
