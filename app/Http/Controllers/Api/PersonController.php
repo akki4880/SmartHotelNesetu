@@ -264,9 +264,8 @@ class PersonController extends Controller
         ]);
 
         $hotelId = auth()->user()->hotel_id;
-        $person = Person::where('hotel_id', $hotelId)
-            ->where('id', $id)
-            ->first();
+
+        $person = Person::where('hotel_id', $hotelId)->find($id);
 
         if (!$person) {
             return response()->json([
@@ -276,11 +275,14 @@ class PersonController extends Controller
         }
 
         $targetId = $request->has('pairing_id')
-            ? $request->pairing_id
-            : $request->pair_with_id;
+            ? $request->input('pairing_id')
+            : $request->input('pair_with_id');
 
+        // Unpair selected person
         if ($targetId === null) {
-            $person->update(['pairing_id' => null]);
+            $person->update([
+                'pairing_id' => null,
+            ]);
 
             return response()->json([
                 'status' => true,
@@ -289,9 +291,14 @@ class PersonController extends Controller
             ]);
         }
 
-        $target = Person::where('hotel_id', $hotelId)
-            ->where('id', $targetId)
-            ->first();
+        if ((int) $targetId === (int) $person->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'A person cannot be paired with themselves.',
+            ], 422);
+        }
+
+        $target = Person::where('hotel_id', $hotelId)->find($targetId);
 
         if (!$target) {
             return response()->json([
@@ -300,24 +307,26 @@ class PersonController extends Controller
             ], 404);
         }
 
-        $pairingId = $target->pairing_id ?? $target->id;
+        DB::transaction(function () use ($person, $target) {
 
-        DB::transaction(function () use ($hotelId, $person, $target, $pairingId) {
-            Person::where('hotel_id', $hotelId)
-                ->where(function ($query) use ($person, $target, $pairingId) {
-                    $query->where('id', $person->id)
-                        ->orWhere('id', $target->id)
-                        ->orWhere('pairing_id', $pairingId)
-                        ->orWhere('pairing_id', $person->pairing_id);
-                })
-                ->update(['pairing_id' => $pairingId]);
+            // Use existing target pairing ID or target's own ID
+            $pairingId = $target->pairing_id ?? $target->id;
+
+            // Assign the same pairing ID to both selected people
+            Person::where('hotel_id', $person->hotel_id)
+                ->whereIn('id', [$person->id, $target->id])
+                ->update([
+                    'pairing_id' => $pairingId,
+                ]);
         });
+
+        $person->refresh();
 
         return response()->json([
             'status' => true,
             'message' => 'Pairing updated successfully.',
-            'data' => $person->fresh(),
-            'pairing_id' => $pairingId,
+            'data' => $person,
+            'pairing_id' => $person->pairing_id,
         ]);
     }
 }
