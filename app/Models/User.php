@@ -23,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
         'user_role_id',
         'permissions',
         'hotel_id'

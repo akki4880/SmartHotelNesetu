@@ -87,6 +87,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <th>Sr</th>
                                 <th>Name</th>
                                 <th>Email</th>
+                                <th>Phone</th>
                                 <th>Permissions</th>
                             </tr>
                         </thead>
@@ -110,6 +111,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             class="btn one-btn-outline-success btn-icon btn-sm editBtn btn-loader mx-1"
                                             data-id="{{ $admin->id }}" data-name="{{ $admin->name }}"
                                             data-email="{{ $admin->email }}"
+                                            data-phone="{{ $admin->phone }}"
                                             data-permissions='@json($admin->permissions ?? [])'
                                             data-status="{{ $admin->status }}" title="Edit">
                                             <i class="fa-solid fa-pen-to-square"></i>
@@ -145,6 +147,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                                 {{-- Email --}}
                                 <td>{{ $admin->email }}</td>
+
+                                {{-- Phone --}}
+                                <td>{{ $admin->phone }}</td>
 
 
                                 {{-- Permissions --}}
@@ -520,13 +525,13 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         let adminId = $(this).data('id');
         let name = $(this).data('name');
         let email = $(this).data('email');
-        // let hotel = $(this).data('hotel');
+        let phone = $(this).data('phone');
         let permissions = $(this).data('permissions');
 
         $('#editAdminId').val(adminId);
         $('#editName').val(name);
         $('#editEmail').val(email);
-        // $('#editHotel').val(hotel);
+        $('#editPhone').val(phone);
 
         // Clear all checkboxes first
         $('.edit-perm-checkbox').prop('checked', false);
