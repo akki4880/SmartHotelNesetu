@@ -169,7 +169,7 @@
 
         // guest 
         Route::resource('guests', GuestController::class);
-        Route::resource('peoples', PersonController::class);
+        Route::resource('persons', PersonController::class);
 
         // agent 
         Route::resource('agents', AgentController::class);

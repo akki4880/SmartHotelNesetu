@@ -199,11 +199,11 @@
             </li>
             @endif
 
-            @if(auth()->user()->hasPermission('peoples', 'view'))
-            <li class="{{ request()->is('peoples') ? 'active' : '' }}">
-                <a href="{{url('/peoples')}}" title="Peoples" data-filter-tags="peoples">
-                    <span class="nav-link-text" data-i18n="nav.peoples"><i class="fas fa-user-friends"></i>
-                        &nbsp; Peoples</span>
+            @if(auth()->user()->hasPermission('persons', 'view'))
+            <li class="{{ request()->is('persons') ? 'active' : '' }}">
+                <a href="{{url('/person')}}" title="Person" data-filter-tags="person">
+                    <span class="nav-link-text" data-i18n="nav.person"><i class="fas fa-user-friends"></i>
+                        &nbsp; Person</span>
                 </a>
             </li>
             @endif
