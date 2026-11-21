@@ -203,14 +203,21 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <div class="row">
 
                         {{-- Name --}}
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-4">
                             <label>Name </label>
                             <input type="text" name="name" class="form-control" placeholder="Enter name" required>
                             <small class="text-danger error-text" data-error="name"></small>
                         </div>
 
+                        {{-- Phone --}}
+                        <div class="form-group col-md-4">
+                            <label>Phone Number </label>
+                            <input type="text" name="phone" class="form-control" placeholder="Enter phone" required>
+                            <small class="text-danger error-text" data-error="phone"></small>
+                        </div>
+
                         {{-- Email --}}
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-4">
                             <label>Email </label>
                             <input type="email" name="email" class="form-control" placeholder="Enter email" required>
                             <small class="text-danger error-text" data-error="email"></small>
@@ -345,14 +352,21 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                     <div class="row">
                         {{-- Name --}}
-                        <div class="form-group col-6">
+                        <div class="form-group col-4">
                             <label>Name</label>
                             <input type="text" name="name" id="editName" class="form-control" required>
                             <small class="text-danger error-text" data-error="name"></small>
                         </div>
 
+                        {{-- Phone --}}
+                        <div class="form-group col-md-4">
+                            <label>Phone Number </label>
+                            <input type="text" name="phone" id="editPhone" class="form-control" placeholder="Enter phone" required>
+                            <small class="text-danger error-text" data-error="phone"></small>
+                        </div>
+
                         {{-- Email --}}
-                        <div class="form-group col-6">
+                        <div class="form-group col-4">
                             <label>Email</label>
                             <input type="email" name="email" id="editEmail" class="form-control" required>
                             <small class="text-danger error-text" data-error="email"></small>
