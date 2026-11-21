@@ -200,10 +200,10 @@
             @endif
 
             @if(auth()->user()->hasPermission('persons', 'view'))
-            <li class="{{ request()->is('person') ? 'active' : '' }}">
-                <a href="{{url('/person')}}" title="Person" data-filter-tags="person">
-                    <span class="nav-link-text" data-i18n="nav.person"><i class="fas fa-user-friends"></i>
-                        &nbsp; Person</span>
+            <li class="{{ request()->is('persons') ? 'active' : '' }}">
+                <a href="{{url('/persons')}}" title="Persons" data-filter-tags="persons">
+                    <span class="nav-link-text" data-i18n="nav.persons"><i class="fas fa-user-friends"></i>
+                        &nbsp; Persons</span>
                 </a>
             </li>
             @endif
