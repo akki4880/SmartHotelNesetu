@@ -91,6 +91,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <th>Sr</th>
                                 <th>Name</th>
                                 <th>Email</th>
+                                <th>Phone</th>
                                 <th>Permissions</th>
                             </tr>
                         </thead>
@@ -118,6 +119,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             class="btn btn-outline-success btn-icon btn-sm editBtn btn-loader mx-1"
                                             data-id="{{ $admin->id }}" data-name="{{ $admin->name }}"
                                             data-email="{{ $admin->email }}" 
+                                            data-phone="{{ $admin->phone }}"
                                             data-permissions='@json($admin->permissions ?? [])'
                                             data-status="{{ $admin->status }}" title="Edit">
                                             <i class="fa-solid fa-pen-to-square"></i>
@@ -151,6 +153,9 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
 
                                 {{-- Email --}}
                                 <td>{{ $admin->email }}</td>
+
+                                {{-- Phone --}}
+                                <td>{{ $admin->phone ?: '-' }}</td>
 
                                 {{-- Permissions --}}
                                 <td>
@@ -212,15 +217,22 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                     <div class="row">
 
                         {{-- Name --}}
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-4">
                             <label>Name <span class="text-danger">*</span></label>
 
                             <input type="text" name="name" class="form-control" placeholder="Enter Name"
                                 data-rules="required|min:3|max:100">
                         </div>
 
+                        {{-- Phone --}}
+                        <div class="form-group col-md-4">
+                            <label>Phone Number </label>
+                            <input type="text" name="phone" class="form-control" placeholder="Enter phone" required>
+                            <small class="text-danger error-text" data-error="phone"></small>
+                        </div>
+
                         {{-- Email --}}
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-4">
                             <label>Email <span class="text-danger">*</span> </label>
 
                             <input type="email" name="email" class="form-control" placeholder="Enter Email"
@@ -359,6 +371,13 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <label>Name</label>
                             <input type="text" name="name" id="editName" class="form-control" required minlength="3"
                                 maxlength="100">
+                        </div>
+
+                        {{-- Phone --}}
+                        <div class="form-group col-md-4">
+                            <label>Phone Number </label>
+                            <input type="text" name="phone" id="editPhone" class="form-control" placeholder="Enter phone" required>
+                            <small class="text-danger error-text" data-error="phone"></small>
                         </div>
 
                         <div class="form-group col-md-4">
@@ -576,6 +595,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         $('#editAdminId').val(adminId);
         $('#editName').val($(this).data('name'));
         $('#editEmail').val($(this).data('email'));
+        $('#editPhone').val($(this).data('phone'));
         $('#EditForm').attr('action', `/developers/${adminId}`);
         $('.edit-perm-checkbox').prop('checked', false);
 
