@@ -28,7 +28,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'string', 'phone'],
+            'phone' => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
             'password' => ['required', 'string'],
         ];
     }
@@ -81,6 +81,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->input('phone')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->input('phone')) . '|' . $this->ip());
     }
 }
