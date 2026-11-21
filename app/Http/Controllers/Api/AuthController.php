@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -73,16 +74,31 @@ class AuthController extends Controller
             }
         }
 
+        $user->tokens()->delete();
+
+        $refreshTokenPlain = Str::random(64);
         // Generate Sanctum token
         $token = $user->createToken(
             $validated['device_name'] ?? 'smarthotel-mobile'
         )->plainTextToken;
+        DB::table('refreshtokens')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'token' => Hash::make($refreshTokenPlain),
+                'device_id' => $request->device_id,
+                'expires_at' => now()->addDays(60),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+
 
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user,
             'hotel' => $user->hotel,
             'token' => $token,
+            'refresh_token' => $refreshTokenPlain,
             'token_type' => 'Bearer',
         ], 200);
     }
