@@ -35,6 +35,7 @@ class AuthController extends Controller
             ], 401);
         }
 
+        $user->load('hotel.subscription.plan');
         // Check hotel and subscription for client roles
         if ($user->user_role_id >= 3) {
 
@@ -74,6 +75,28 @@ class AuthController extends Controller
             }
         }
 
+        // Get permissions based on user role
+        $permissions = [];
+
+        // Role 1 and 2: Permissions from users table
+        if (in_array((int) $user->user_role_id, [1, 2])) {
+            $permissions = $user->permissions;
+        }
+
+        // Role 3: Permissions from hotel's subscription plan
+        elseif ((int) $user->user_role_id === 3) {
+            $permissions = $user->hotel?->subscription?->plan?->permissions ?? [];
+        }
+
+        // Decode JSON permissions if necessary
+        if (is_string($permissions)) {
+            $permissions = json_decode($permissions, true);
+        }
+
+        if (!is_array($permissions)) {
+            $permissions = [];
+        }
+
         $user->tokens()->delete();
 
         $refreshTokenPlain = Str::random(64);
@@ -92,11 +115,11 @@ class AuthController extends Controller
             ]
         );
 
-
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user,
             'hotel' => $user->hotel,
+            'permissions' => $permissions,
             'token' => $token,
             'refresh_token' => $refreshTokenPlain,
             'token_type' => 'Bearer',
