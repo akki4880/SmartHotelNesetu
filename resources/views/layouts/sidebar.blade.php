@@ -199,6 +199,15 @@
             </li>
             @endif
 
+            @if(auth()->user()->hasPermission('persons', 'view'))
+            <li class="{{ request()->is('persons') ? 'active' : '' }}">
+                <a href="{{url('/person')}}" title="Person" data-filter-tags="person">
+                    <span class="nav-link-text" data-i18n="nav.person"><i class="fas fa-user-friends"></i>
+                        &nbsp; Person</span>
+                </a>
+            </li>
+            @endif
+
             @if(auth()->user()->hasPermission('room_types', 'view') || auth()->user()->hasPermission('room_numbers', 'view') || auth()->user()->hasPermission('room_rate_setup', 'view') || auth()->user()->hasPermission('seasonal_room_rate_setup', 'view') || auth()->user()->hasPermission('hourly_room_rate_setup', 'view'))
             <li class="{{ request()->is('room-management*') ? 'active open' : '' }}">
                 <a href="javascript:void(0);" title="Room Management" data-filter-tags="room management">

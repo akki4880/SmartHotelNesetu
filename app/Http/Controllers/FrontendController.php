@@ -6,30 +6,38 @@ use Illuminate\Http\Request;
 
 class FrontendController extends Controller
 {
-    public function home()
+     
+    public function privacyPolicy()
     {
-        return view('frontend.home.index');
+        return view('frontend.privacy-policy.index');
     }
 
-    public function aboutUs()
+    public function termsAndConditions()
     {
-        return view('frontend.about-us.index');
+        return view('frontend.terms-and-conditions.index');
     }
 
-    public function pricing()
+    public function dataProtectionPolicy()
     {
-        return view('frontend.pricing.index');
+        return view('frontend.data-protection-policy.index');
     }
 
-    public function contactUs()
+    public function cancellationRefundPolicy()
     {
-        return view('frontend.contact-us.index');
+        return view('frontend.cancellation-refund-policy.index');
     }
 
-    public function services()
+    public function disclaimer()
     {
-        return view('frontend.services.index');
+        return view('frontend.disclaimer.index');
     }
+
+    public function cookiePolicy()
+    {
+        return view('frontend.cookie-policy.index');
+    }
+
+
 
     public function login()
     {

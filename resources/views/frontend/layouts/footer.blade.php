@@ -1,4 +1,4 @@
- <!-- ===================== FOOTER ===================== -->
+<!-- ===================== FOOTER ===================== -->
   <footer class="sh-footer">
     <div class="container">
       <div class="row g-5">
@@ -28,16 +28,16 @@
             <li><a href="/contact-us">Contact</a></li>
           </ul>
         </div>
-        <!-- Services -->
+        <!-- Policies -->
         <div class="col-6 col-lg-3">
-          <h6>Services</h6>
+          <h6>Policies</h6>
           <ul class="footer-links">
-            <li><a href="/services">Room Booking</a></li>
-            <li><a href="/services">Front Desk</a></li>
-            <li><a href="/services">Invoice System</a></li>
-            <li><a href="/services">Employee Attendance</a></li>
-            <li><a href="/services">Payroll Management</a></li>
-            <li><a href="/services">Reports &amp; Analytics</a></li>
+            <li><a href="{{ route('privacy-policy') }}">Privacy Policy</a></li>
+            <li><a href="{{ route('terms-and-conditions') }}">Terms &amp; Conditions</a></li>
+            <li><a href="{{ route('data-protection-policy') }}">Data Protection Policy</a></li>
+            <li><a href="{{ route('cancellation-refund-policy') }}">Cancellation &amp; Refund Policy</a></li>
+            <li><a href="{{ route('disclaimer') }}">Disclaimer</a></li>
+            <li><a href="{{ route('cookie-policy') }}">Cookie Policy</a></li>
           </ul>
         </div>
         <!-- Contact -->
@@ -60,18 +60,13 @@
     </div>
     <div class="footer-bottom">
       <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
-        <p style="color:rgba(255,255,255,.35)">&copy; 2025 SmartHotel Technologies Pvt. Ltd. All rights reserved.</p>
-        <div class="footer-legal">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Cookie Policy</a>
-        </div>
+        <p style="color:rgba(255,255,255,.35)" class="mb-0">&copy; 2025 SmartHotel Technologies Pvt. Ltd. All rights reserved.</p>
       </div>
     </div>
   </footer>
 
   <!-- ===================== FLOATING DEMO BUTTON ===================== -->
-  <a href="tel:+911234567890" class="sh-float-btn" title="Call Demo: +91 12345 67890" aria-label="Call Demo">
+  <a href="tel:+918369911029" class="sh-float-btn" title="Call: +91 83699 11029" aria-label="Call SmartHotel">
     <i class="bi bi-telephone-fill"></i>
   </a>
 
