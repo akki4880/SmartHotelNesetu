@@ -52,16 +52,17 @@
     use App\Http\Controllers\DeveloperController;
     use App\Http\Controllers\PersonController;
 
-    Route::get('/', [FrontendController::class, 'home']);
-    Route::get('/about-us', [FrontendController::class, 'aboutUs']);
-    Route::get('/Pricing', [FrontendController::class, 'pricing']);
-    Route::get('/contact-us', [FrontendController::class, 'contactUs']);
-    Route::get('/services', [FrontendController::class, 'services']);
-    Route::get('/login', [FrontendController::class, 'login']);
 
-    Route::get('/ho', function () {
-        return view('hotel');
-    });
+    // Frontend routes
+    Route::get('/', [FrontendController::class, 'login']);
+    Route::get('/privacy-policy', [FrontendController::class, 'privacyPolicy'])->name('privacy-policy');
+    Route::get('/terms-and-conditions', [FrontendController::class, 'termsAndConditions'])->name('terms-and-conditions');
+    Route::get('/data-protection-policy', [FrontendController::class, 'dataProtectionPolicy'])->name('data-protection-policy');
+    Route::get('/cancellation-refund-policy', [FrontendController::class, 'cancellationRefundPolicy'])->name('cancellation-refund-policy');
+    Route::get('/disclaimer', [FrontendController::class, 'disclaimer'])->name('disclaimer');
+    Route::get('/cookie-policy', [FrontendController::class, 'cookiePolicy'])->name('cookie-policy');
+
+
     Route::get('/assign', function () {
         return view('pages.roommanagement.assignrooms.index');
     });
@@ -69,12 +70,9 @@
     Route::post('/contact-request', [ContactRequestController::class, 'store'])->name('contact.request');
     Route::match(['get', 'post'], '/register', function () {
         abort(404);
-    });
+    }); 
 
 
-    // Route::get('/dashboard', function () {
-    //     return view('dashboard');
-    // })->middleware(['auth', 'verified'])->name('dashboard');
 
     Route::middleware('auth')->group(function () {
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
