@@ -17,7 +17,7 @@
       align-items: center;
       justify-content: center;
       padding: 2rem 1rem;
-      position: relative;
+      position: relative; 
       overflow: hidden;
     }
 
@@ -155,9 +155,39 @@
       flex-shrink: 0;
     }
 
+    .login-panel-left .panel-footer {
+      position: relative;
+      z-index: 1;
+    }
+
     .login-panel-left .panel-footer-text {
       font-size: 0.78rem;
       color: rgba(255,255,255,0.3);
+      margin: 0 0 0.5rem;
+    }
+
+    .login-policy-links {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.35rem 0;
+      font-size: 0.72rem;
+    }
+
+    .login-policy-links a {
+      color: rgba(255,255,255,0.55);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .login-policy-links a:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    .login-policy-links .separator {
+      color: rgba(255,255,255,0.25);
+      margin: 0 0.45rem;
     }
 
     /* Right Panel (Form) */
@@ -403,30 +433,14 @@
 </head>
 <body>
 
-  <!-- ===================== NAVBAR ===================== -->
-  <nav class="navbar sh-navbar sh-navbar-auth sticky-top" id="shNavbar">
-    <div class="container d-flex align-items-center justify-content-between">
-      <a class="navbar-brand" href="index.html">
-        <div class="brand-icon"><i class="bi bi-building text-white"></i></div>
-        Smart<span class="brand-accent">Hotel</span>
-      </a>
-      <div class="d-flex align-items-center gap-3">
-        <span style="color:rgba(255,255,255,.5);font-size:.85rem">Don't have an account?</span>
-        <a href="contact.html" class="btn-nav-trial">Start Free Trial</a>
-      </div>
-    </div>
-  </nav>
+ 
 
   <!-- ===================== LOGIN PAGE ===================== -->
   <main class="login-page">
     <div class="login-wrap">
 
       <!-- Left Promo Panel -->
-      <div class="login-panel-left d-none d-md-flex">
-        <a href="index.html" class="brand">
-          <div class="icon"><i class="bi bi-building"></i></div>
-          <span class="brand-name">Smart<span>Hotel</span></span>
-        </a>
+      <div class="login-panel-left d-none d-md-flex">  
         <div class="panel-body">
           <h2>Manage Your Hotel with Confidence</h2>
           <p>Access your complete hotel management dashboard — bookings, staff, billing, and analytics — all from one powerful platform.</p>
@@ -438,11 +452,23 @@
             <li><div class="fi"><i class="bi bi-buildings"></i></div> Multi-branch management</li>
           </ul>
         </div>
-        <p class="panel-footer-text">&copy; 2025 SmartHotel Technologies Pvt. Ltd.</p>
+        <div class="panel-footer">
+          <p class="panel-footer-text">&copy; 2026 SmartHotel Powered by Netsetu</p>
+          <div class="login-policy-links">
+            <a href="{{ route('privacy-policy') }}">Privacy Policy</a>
+            <span class="separator">•</span>
+            <a href="{{ route('terms-and-conditions') }}">Terms &amp; Conditions</a>
+            <span class="separator">•</span>
+            <a href="{{ route('cancellation-refund-policy') }}">Cancellation &amp; Refund</a>
+          </div>
+        </div>
       </div>
 
       <!-- Right Form Panel -->
       <div class="login-panel-right">
+        <a href="/" class="brand text-center mb-3">
+          <img src="{{ asset('assets/img/logo.png') }}" alt="SmartHotel Logo" srcset="" class="w-25" /> 
+        </a>
         <h3>Welcome back</h3>
         <p class="sub">Sign in to your SmartHotel dashboard</p>
 
@@ -502,7 +528,7 @@
   </main>
 
   <!-- Floating Call Button -->
-  <a href="tel:+911234567890" class="sh-float-btn" title="Call Demo: +91 12345 67890" aria-label="Call Demo">
+  <a href="tel:+918369911029" class="sh-float-btn" title="Call Demo: +91 12345 67890" aria-label="Call Demo">
     <i class="bi bi-telephone-fill"></i>
   </a>
 
