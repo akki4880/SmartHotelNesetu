@@ -127,6 +127,7 @@ class PersonController extends Controller
         ], 201);
     }
 
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -136,9 +137,13 @@ class PersonController extends Controller
             'address' => 'nullable|string',
             'dob' => 'nullable|date',
             'document_id' => 'required|string|max:255',
-
             'pairing_id' => 'nullable|integer',
 
+            // Existing images to retain
+            'keep_documents' => 'nullable|array',
+            'keep_documents.*' => 'string',
+
+            // New images
             'documents' => 'nullable|array',
             'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
@@ -154,7 +159,16 @@ class PersonController extends Controller
             ], 404);
         }
 
-        $documents = $person->documents ?? [];
+        $oldDocuments = $person->documents ?? [];
+
+        // Get images which should be retained
+        $keepDocuments = $request->input('keep_documents', $oldDocuments);
+
+        // Only allow retaining images belonging to this person
+        $keepDocuments = array_values(array_intersect(
+            $oldDocuments,
+            $keepDocuments
+        ));
 
         $documentPath = public_path('persons/documents');
 
@@ -162,6 +176,18 @@ class PersonController extends Controller
             mkdir($documentPath, 0755, true);
         }
 
+        // Delete removed images from storage
+        $removedDocuments = array_diff($oldDocuments, $keepDocuments);
+
+        foreach ($removedDocuments as $document) {
+            $fullPath = public_path($document);
+
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+        }
+
+        // Upload newly added images
         if ($request->hasFile('documents')) {
             foreach ($request->file('documents') as $photo) {
                 $fileName = time() . '_' . uniqid() . '.' .
@@ -169,7 +195,7 @@ class PersonController extends Controller
 
                 $photo->move($documentPath, $fileName);
 
-                $documents[] = 'persons/documents/' . $fileName;
+                $keepDocuments[] = 'persons/documents/' . $fileName;
             }
         }
 
@@ -180,8 +206,10 @@ class PersonController extends Controller
             'address' => $request->address,
             'dob' => $request->dob,
             'document_id' => $request->document_id,
-            'pairing_id' => $request->has('pairing_id') ? $request->pairing_id : $person->pairing_id,
-            'documents' => $documents,
+            'pairing_id' => $request->has('pairing_id')
+                ? $request->pairing_id
+                : $person->pairing_id,
+            'documents' => array_values($keepDocuments),
         ]);
 
         return response()->json([
@@ -190,6 +218,7 @@ class PersonController extends Controller
             'data' => $person->fresh(),
         ]);
     }
+
 
     public function search(Request $request)
     {
