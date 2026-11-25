@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Person;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class PersonController extends Controller
 {
@@ -74,6 +76,7 @@ class PersonController extends Controller
     }
 
 
+
     public function store(Request $request)
     {
         $request->validate([
@@ -99,11 +102,84 @@ class PersonController extends Controller
         }
 
         if ($request->hasFile('documents')) {
+
             foreach ($request->file('documents') as $photo) {
 
-                $fileName = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+                $extension = strtolower(
+                    $photo->getClientOriginalExtension()
+                );
 
-                $photo->move($documentPath, $fileName);
+                $fileName = time() . '_' . uniqid() . '.' . $extension;
+
+                $destination = $documentPath . '/' . $fileName;
+
+                $maxSize = 100 * 1024; // 100 KB
+
+                // Check original image size
+                if ($photo->getSize() > $maxSize) {
+
+                    // Initialize Intervention Image
+                    $manager = new ImageManager(new Driver());
+
+                    $image = $manager->read($photo->getRealPath());
+
+                    $quality = 85;
+
+                    $compressed = null;
+
+                    // Compress until image is 100 KB or less
+                    for ($i = 0; $i < 25; $i++) {
+
+                        if ($extension === 'jpg' || $extension === 'jpeg') {
+
+                            $compressed = $image->toJpeg($quality);
+
+                            // Reduce JPEG quality gradually
+                            $quality = max(35, $quality - 5);
+                        } else {
+
+                            // Preserve PNG format and transparency
+                            $compressed = $image->toPng();
+                        }
+
+                        // Check compressed image size
+                        if (strlen((string) $compressed) <= $maxSize) {
+                            break;
+                        }
+
+                        // Reduce image dimensions gradually
+                        $newWidth = max(
+                            1,
+                            (int) ($image->width() * 0.90)
+                        );
+
+                        if ($newWidth >= $image->width()) {
+                            break;
+                        }
+
+                        $image->scale(width: $newWidth);
+                    }
+
+                    // Ensure final image is within 100 KB
+                    if (
+                        $compressed === null ||
+                        strlen((string) $compressed) > $maxSize
+                    ) {
+                        throw new \RuntimeException(
+                            'Unable to compress image below 100 KB.'
+                        );
+                    }
+
+                    // Store compressed image
+                    file_put_contents(
+                        $destination,
+                        (string) $compressed
+                    );
+                } else {
+
+                    // Store original image without modification
+                    $photo->move($documentPath, $fileName);
+                }
 
                 $documents[] = 'persons/documents/' . $fileName;
             }
@@ -187,13 +263,62 @@ class PersonController extends Controller
             }
         }
 
-        // Upload newly added images
+        // Upload newly added images with 100 KB compression
         if ($request->hasFile('documents')) {
-            foreach ($request->file('documents') as $photo) {
-                $fileName = time() . '_' . uniqid() . '.' .
-                    $photo->getClientOriginalExtension();
+            $manager = new ImageManager(new Driver());
+            $maxSize = 100 * 1024; // 100 KB
 
-                $photo->move($documentPath, $fileName);
+            foreach ($request->file('documents') as $photo) {
+                $extension = strtolower($photo->getClientOriginalExtension());
+
+                $fileName = time() . '_' . uniqid() . '.' . $extension;
+                $destination = $documentPath . '/' . $fileName;
+
+                // If image is larger than 100 KB, compress it
+                if ($photo->getSize() > $maxSize) {
+                    $image = $manager->read($photo->getRealPath());
+
+                    $quality = 85;
+                    $compressed = null;
+
+                    for ($i = 0; $i < 25; $i++) {
+
+                        if (in_array($extension, ['jpg', 'jpeg'])) {
+                            $compressed = $image->toJpeg($quality);
+                            $quality = max(35, $quality - 5);
+                        } else {
+                            $compressed = $image->toPng();
+                        }
+
+                        if (strlen((string) $compressed) <= $maxSize) {
+                            break;
+                        }
+
+                        // Reduce image dimensions by 10%
+                        $newWidth = max(1, (int) ($image->width() * 0.90));
+
+                        if ($newWidth >= $image->width()) {
+                            break;
+                        }
+
+                        $image->scale(width: $newWidth);
+                    }
+
+                    if (
+                        $compressed === null ||
+                        strlen((string) $compressed) > $maxSize
+                    ) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Unable to compress one of the uploaded images below 100 KB. Please upload a smaller image.',
+                        ], 422);
+                    }
+
+                    file_put_contents($destination, (string) $compressed);
+                } else {
+                    // Store original image unchanged if it is 100 KB or smaller
+                    $photo->move($documentPath, $fileName);
+                }
 
                 $keepDocuments[] = 'persons/documents/' . $fileName;
             }
