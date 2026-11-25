@@ -20,7 +20,6 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        dd("HELLO");
         $validated = $request->validate([
             'phone' => ['required', 'string'],
             'password' => ['required', 'string'],
