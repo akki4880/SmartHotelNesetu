@@ -134,6 +134,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <th>Price</th>
                                 <th>Included Features</th>
                                 <th>Excluded Features</th>
+                                <th>Image Upload Limit</th>
                                 <th>Permissions</th>
                                 <th>Status</th>
                             </tr>
@@ -178,7 +179,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <td>{{ ($plans->currentPage() - 1) * $plans->perPage() + $index + 1 }}</td>
                                 <td>{{ $plan->name }}</td>
                                 <td>{{ $plan->duration }} days</td>
-                                <td>{{ $plan->price }}</td>
+                                <td>₹{{ $plan->price }}</td>
                                 <td>
                                     @foreach($plan->included_features ?? [] as $feature)
                                     <span class="badge badge-success">{{ $feature }}</span>
@@ -190,6 +191,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                     <span class="badge badge-danger">{{ $feature }}</span>
                                     @endforeach
                                 </td>
+                                <td>{{ $plan->image_upload_limit ?? 'N/A' }}</td>
                                 {{-- Permissions --}}
                                 <td>
                                     @if(!empty($plan->permissions))
