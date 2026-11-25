@@ -178,10 +178,9 @@ class PersonController extends Controller
                 } else {
 
                     // Store original image without modification
-                    $photo->move($documentPath, $fileName);
+                    $photo->move($documentPath . '/' . $hotelId, $fileName);
                 }
-
-                $documents[] = 'persons/documents/' . $fileName;
+                $documents[] = $documentPath . '/' . $hotelId . '/'  . $fileName;
             }
         }
 
@@ -224,6 +223,8 @@ class PersonController extends Controller
             'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
+        $hotelId = auth()->user()->hotel_id;
+
         $person = Person::where('id', $id)
             ->where('hotel_id', auth()->user()->hotel_id)
             ->first();
@@ -248,8 +249,8 @@ class PersonController extends Controller
 
         $documentPath = public_path('persons/documents');
 
-        if (!file_exists($documentPath)) {
-            mkdir($documentPath, 0755, true);
+        if (!file_exists($documentPath . '/' . $hotelId)) {
+            mkdir($documentPath . '/' . $hotelId, 0755, true);
         }
 
         // Delete removed images from storage
@@ -272,7 +273,7 @@ class PersonController extends Controller
                 $extension = strtolower($photo->getClientOriginalExtension());
 
                 $fileName = time() . '_' . uniqid() . '.' . $extension;
-                $destination = $documentPath . '/' . $fileName;
+                $destination = $documentPath . '/' . $hotelId . '/' . $fileName;
 
                 // If image is larger than 100 KB, compress it
                 if ($photo->getSize() > $maxSize) {
@@ -317,10 +318,10 @@ class PersonController extends Controller
                     file_put_contents($destination, (string) $compressed);
                 } else {
                     // Store original image unchanged if it is 100 KB or smaller
-                    $photo->move($documentPath, $fileName);
+                    $photo->move($documentPath . '/' . $hotelId, $fileName);
                 }
 
-                $keepDocuments[] = 'persons/documents/' . $fileName;
+                $keepDocuments[] = $documentPath . '/' . $hotelId . '/' . $fileName;
             }
         }
 

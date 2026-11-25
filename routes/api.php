@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HousekeepingController;
 use App\Http\Controllers\Api\GuestController;
 use Illuminate\Http\Request;
@@ -19,6 +20,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
     Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::get('/guest', [GuestController::class, 'index']);
 
