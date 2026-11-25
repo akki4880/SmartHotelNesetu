@@ -180,7 +180,7 @@ class PersonController extends Controller
                     // Store original image without modification
                     $photo->move($documentPath . '/' . $hotelId, $fileName);
                 }
-                $documents[] = $documentPath . '/' . $hotelId . '/'  . $fileName;
+                $documents[] = 'persons/documents' . '/' . $hotelId . '/'  . $fileName;
             }
         }
 
@@ -321,7 +321,7 @@ class PersonController extends Controller
                     $photo->move($documentPath . '/' . $hotelId, $fileName);
                 }
 
-                $keepDocuments[] = $documentPath . '/' . $hotelId . '/' . $fileName;
+                $keepDocuments[] = 'persons/documents' . '/' . $hotelId . '/' . $fileName;
             }
         }
 
