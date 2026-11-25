@@ -59,7 +59,7 @@ class DashboardController extends Controller
             $plan = $user->hotel?->subscription?->plan;
 
             // Replace with your actual plan column name
-            $imageLimit = $plan?->person_image_limit;
+            $imageLimit = $plan?->image_upload_limit;
 
             $modules['persons'] = [
                 'total' => $totalPersons,
