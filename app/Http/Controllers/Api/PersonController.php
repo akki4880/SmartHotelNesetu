@@ -13,7 +13,9 @@ class PersonController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Person::where('hotel_id', auth()->user()->hotel_id);
+        $user = auth()->user();
+
+        $query = Person::where('hotel_id', $user->hotel_id);
 
         // Search by name
         if ($request->filled('full_name')) {
@@ -40,13 +42,39 @@ class PersonController extends Controller
 
         $persons = $query->latest()->get();
 
+        // Calculate image usage across ALL persons of this hotel.
+        // Do not use the filtered $persons collection for this calculation.
+        $allPersons = Person::where('hotel_id', $user->hotel_id)
+            ->get(['documents']);
+
+        $uploadedImages = $allPersons->sum(function ($person) {
+            $documents = $person->documents;
+
+            if (is_string($documents)) {
+                $documents = json_decode($documents, true);
+            }
+
+            return is_array($documents) ? count($documents) : 0;
+        });
+
+        $plan = $user->hotel?->subscription?->plan;
+
+        $imageLimit = $plan?->image_upload_limit;
+
+        $imageUpload = [
+            'limit' => $imageLimit !== null ? (int) $imageLimit : null,
+            'uploaded' => (int) $uploadedImages,
+            'remaining' => $imageLimit !== null
+                ? max(0, (int) $imageLimit - $uploadedImages)
+                : null,
+        ];
+
         // Group paired persons together
         $groupedPersons = $persons->groupBy(function ($person) {
             return $person->pairing_id
                 ? 'pair_' . $person->pairing_id
                 : 'person_' . $person->id;
         })->map(function ($group) {
-
             return [
                 'pairing_id' => $group->first()->pairing_id,
                 'persons' => $group->values()->map(function ($person) {
@@ -71,11 +99,10 @@ class PersonController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Persons fetched successfully.',
+            'image_upload' => $imageUpload,
             'data' => $groupedPersons,
         ]);
     }
-
-
 
     public function store(Request $request)
     {
