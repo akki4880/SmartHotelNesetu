@@ -42,33 +42,6 @@ class PersonController extends Controller
 
         $persons = $query->latest()->get();
 
-        // Calculate image usage across ALL persons of this hotel.
-        // Do not use the filtered $persons collection for this calculation.
-        $allPersons = Person::where('hotel_id', $user->hotel_id)
-            ->get(['documents']);
-
-        $uploadedImages = $allPersons->sum(function ($person) {
-            $documents = $person->documents;
-
-            if (is_string($documents)) {
-                $documents = json_decode($documents, true);
-            }
-
-            return is_array($documents) ? count($documents) : 0;
-        });
-
-        $plan = $user->hotel?->subscription?->plan;
-
-        $imageLimit = $plan?->image_upload_limit;
-
-        $imageUpload = [
-            'limit' => $imageLimit !== null ? (int) $imageLimit : null,
-            'uploaded' => (int) $uploadedImages,
-            'remaining' => $imageLimit !== null
-                ? max(0, (int) $imageLimit - $uploadedImages)
-                : null,
-        ];
-
         // Group paired persons together
         $groupedPersons = $persons->groupBy(function ($person) {
             return $person->pairing_id
@@ -99,9 +72,98 @@ class PersonController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Persons fetched successfully.',
-            'image_upload' => $imageUpload,
+            'image_upload' => $this->getImageUploadUsage(auth()->user()),
             'data' => $groupedPersons,
         ]);
+    }
+
+    private function getImageUploadUsage($user): array
+    {
+        $persons = Person::where('hotel_id', $user->hotel_id)
+            ->get(['documents']);
+
+        $uploaded = $persons->sum(function ($person) {
+            $documents = $person->documents;
+
+            if (is_string($documents)) {
+                $documents = json_decode($documents, true);
+            }
+
+            return is_array($documents) ? count($documents) : 0;
+        });
+
+        $limit = $user->hotel?->subscription?->plan?->image_upload_limit;
+
+        $limit = $limit !== null ? (int) $limit : null;
+
+        $remaining = $limit !== null
+            ? max(0, $limit - $uploaded)
+            : null;
+
+        // Warning begins at 80% usage.
+        $almostFull = $limit !== null
+            && $limit > 0
+            && $uploaded >= ceil($limit * 0.8)
+            && $uploaded < $limit;
+
+        return [
+            'limit' => $limit,
+            'uploaded' => (int) $uploaded,
+            'remaining' => $remaining,
+            'almost_full' => $almostFull,
+            'limit_reached' => $limit !== null && $uploaded >= $limit,
+        ];
+    }
+
+    private function validateImageUploadLimit(
+        Request $request,
+        $user,
+        int $existingCount = 0,
+        int $retainedCount = 0
+    ) {
+        $usage = $this->getImageUploadUsage($user);
+
+        // Number of newly selected images.
+        $newImages = $request->file('documents', []);
+
+        if (!is_array($newImages)) {
+            $newImages = $newImages ? [$newImages] : [];
+        }
+
+        $newCount = count($newImages);
+
+        // Calculate projected usage after this operation.
+        $projectedUsage = $usage['uploaded']
+            - $existingCount
+            + $retainedCount
+            + $newCount;
+
+        if (
+            $usage['limit'] !== null &&
+            $projectedUsage > $usage['limit']
+        ) {
+            $remaining = max(
+                0,
+                $usage['limit'] - (
+                    $usage['uploaded'] - $existingCount + $retainedCount
+                )
+            );
+
+            return response()->json([
+                'status' => false,
+                'message' => "Image upload limit exceeded. You can upload only {$remaining} more image(s). Please contact Smart Sales for a top-up.",
+                'image_upload' => [
+                    'limit' => $usage['limit'],
+                    'uploaded' => $usage['uploaded'],
+                    'remaining' => $remaining,
+                    'requested' => $newCount,
+                    'almost_full' => $usage['almost_full'],
+                    'limit_reached' => true,
+                ],
+            ], 422);
+        }
+
+        return null;
     }
 
     public function store(Request $request)
@@ -126,6 +188,15 @@ class PersonController extends Controller
 
         if (!file_exists($documentPath)) {
             mkdir($documentPath, 0755, true);
+        }
+
+        $limitResponse = $this->validateImageUploadLimit(
+            $request,
+            auth()->user()
+        );
+
+        if ($limitResponse) {
+            return $limitResponse;
         }
 
         if ($request->hasFile('documents')) {
@@ -273,6 +344,17 @@ class PersonController extends Controller
             $oldDocuments,
             $keepDocuments
         ));
+
+        $limitResponse = $this->validateImageUploadLimit(
+            $request,
+            auth()->user(),
+            count($oldDocuments),
+            count($keepDocuments)
+        );
+
+        if ($limitResponse) {
+            return $limitResponse;
+        }
 
         $documentPath = public_path('persons/documents');
 
