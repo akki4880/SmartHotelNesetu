@@ -114,11 +114,10 @@ class AuthController extends Controller
                 'created_at' => now(),
             ]
         );
-
+$user->unsetRelation('hotel');
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user,
-            'hotel' => $user->hotel,
             'permissions' => $permissions,
             'token' => $token,
             'refresh_token' => $refreshTokenPlain,
