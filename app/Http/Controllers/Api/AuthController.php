@@ -20,10 +20,11 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        dd("HELLO");
         $validated = $request->validate([
             'phone' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'device_name' => ['nullable', 'string', 'max:255'],
+            'device_id' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Find user using phone from users table
@@ -102,7 +103,7 @@ class AuthController extends Controller
         $refreshTokenPlain = Str::random(64);
         // Generate Sanctum token
         $token = $user->createToken(
-            $validated['device_name'] ?? 'smarthotel-mobile'
+            $validated['device_id'] ?? 'smarthotel-mobile'
         )->plainTextToken;
         DB::table('refreshtokens')->updateOrInsert(
             ['user_id' => $user->id],
