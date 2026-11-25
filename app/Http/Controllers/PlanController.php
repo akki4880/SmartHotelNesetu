@@ -93,6 +93,7 @@ class PlanController extends Controller implements HasMiddleware
             'excluded_features' => 'nullable|string',
             'status' => 'required|in:0,1',
             'permissions'           => 'nullable|array',
+            'image_upload_limit' => 'nullable|integer',
         ]);
 
         try {
@@ -116,6 +117,7 @@ class PlanController extends Controller implements HasMiddleware
                 'excluded_features' => $excluded,
                 'status' => $request->status,
                 'permissions'   => $permissions,
+                'image_upload_limit' => $request->image_upload_limit ?? null,
             ]);
 
             DB::commit();
@@ -156,6 +158,10 @@ class PlanController extends Controller implements HasMiddleware
                 [
                     'label' => 'Duration',
                     'value' => $plan->duration . ' Days',
+                ],
+                [
+                    'label' => 'Image Upload Limit',
+                    'value' => $plan->image_upload_limit ?? 'N/A',
                 ],
                 [
                     'label' => 'Status',
@@ -200,6 +206,7 @@ class PlanController extends Controller implements HasMiddleware
             'excluded_features' => 'nullable|string',
             'status' => 'required|in:0,1',
             'permissions' => 'nullable|array',
+            'image_upload_limit' => 'nullable|integer',
         ]);
 
         try {
@@ -224,6 +231,7 @@ class PlanController extends Controller implements HasMiddleware
                 'excluded_features' => $excluded,
                 'status' => $request->status,
                 'permissions' => $request->permissions ? $request->permissions : [],
+                'image_upload_limit' => $request->image_upload_limit ?? null,
             ]);
 
             DB::commit();

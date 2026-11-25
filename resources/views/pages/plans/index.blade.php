@@ -159,7 +159,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                             data-description="{{ $plan->description }}"
                                             data-included="{{ implode(', ', $plan->included_features ?? []) }}"
                                             data-excluded="{{ implode(', ', $plan->excluded_features ?? []) }}"
-                                            data-status="{{ $plan->status }}" data-permissions='@json($plan->permissions)' title="Edit">
+                                            data-status="{{ $plan->status }}" data-image_upload_limit="{{ $plan->image_upload_limit }}" data-permissions='@json($plan->permissions)' title="Edit">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
 
@@ -283,6 +283,12 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                                 <option value="0">Inactive</option>
                             </select>
                             <small class="text-danger error-text" data-error="status"></small>
+                        </div>
+
+                        <div class="form-group col-4">
+                            <label>Image Upload Limit</label>
+                            <input type="number" name="image_upload_limit" class="form-control">
+                            <small class="text-danger error-text" data-error="image_upload_limit"></small>
                         </div>
 
                         {{-- Permissions --}}
@@ -419,6 +425,12 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
                             <small class="text-danger error-text" data-error="status"></small>
                         </div>
 
+                        <div class="form-group col-4">
+                            <label>Image Upload Limit</label>
+                            <input type="number" name="image_upload_limit" id="edit_image_upload_limit" class="form-control">
+                            <small class="text-danger error-text" data-error="image_upload_limit"></small>
+                        </div>
+
                         {{-- Permissions --}}
                         <div class="form-group col-md-12">
                             <label class="fw-bold">
@@ -497,6 +509,7 @@ $hasFilter = collect($filters)->filter(fn($value) => !empty($value))->isNotEmpty
         $('#edit_description').val($(this).data('description'));
         $('#edit_included_features').val($(this).data('included'));
         $('#edit_excluded_features').val($(this).data('excluded'));
+        $('#edit_image_upload_limit').val($(this).data('image_upload_limit'));
         $('#edit_status').val($(this).data('status'));
         let permissions = $(this).data('permissions') || {};
 
