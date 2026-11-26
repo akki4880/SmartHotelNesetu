@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Person;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class PersonController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Person::where('hotel_id', auth()->user()->hotel_id);
+        $user = auth()->user();
+
+        $query = Person::where('hotel_id', $user->hotel_id);
 
         // Search by name
         if ($request->filled('full_name')) {
@@ -44,7 +48,6 @@ class PersonController extends Controller
                 ? 'pair_' . $person->pairing_id
                 : 'person_' . $person->id;
         })->map(function ($group) {
-
             return [
                 'pairing_id' => $group->first()->pairing_id,
                 'persons' => $group->values()->map(function ($person) {
@@ -69,10 +72,99 @@ class PersonController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Persons fetched successfully.',
+            'image_upload' => $this->getImageUploadUsage(auth()->user()),
             'data' => $groupedPersons,
         ]);
     }
 
+    private function getImageUploadUsage($user): array
+    {
+        $persons = Person::where('hotel_id', $user->hotel_id)
+            ->get(['documents']);
+
+        $uploaded = $persons->sum(function ($person) {
+            $documents = $person->documents;
+
+            if (is_string($documents)) {
+                $documents = json_decode($documents, true);
+            }
+
+            return is_array($documents) ? count($documents) : 0;
+        });
+
+        $limit = $user->hotel?->subscription?->plan?->image_upload_limit;
+
+        $limit = $limit !== null ? (int) $limit : null;
+
+        $remaining = $limit !== null
+            ? max(0, $limit - $uploaded)
+            : null;
+
+        // Warning begins at 80% usage.
+        $almostFull = $limit !== null
+            && $limit > 0
+            && $uploaded >= ceil($limit * 0.8)
+            && $uploaded < $limit;
+
+        return [
+            'limit' => $limit,
+            'uploaded' => (int) $uploaded,
+            'remaining' => $remaining,
+            'almost_full' => $almostFull,
+            'limit_reached' => $limit !== null && $uploaded >= $limit,
+        ];
+    }
+
+    private function validateImageUploadLimit(
+        Request $request,
+        $user,
+        int $existingCount = 0,
+        int $retainedCount = 0
+    ) {
+        $usage = $this->getImageUploadUsage($user);
+
+        // Number of newly selected images.
+        $newImages = $request->file('documents', []);
+
+        if (!is_array($newImages)) {
+            $newImages = $newImages ? [$newImages] : [];
+        }
+
+        $newCount = count($newImages);
+
+        // Calculate projected usage after this operation.
+        $projectedUsage = $usage['uploaded']
+            - $existingCount
+            + $retainedCount
+            + $newCount;
+
+        if (
+            $usage['limit'] !== null &&
+            $projectedUsage > $usage['limit']
+        ) {
+            $remaining = max(
+                0,
+                $usage['limit'] - (
+                    $usage['uploaded'] - $existingCount + $retainedCount
+                )
+            );
+
+            return response()->json([
+                'status' => false,
+                'message' => "Image upload limit exceeded. You can upload only {$remaining} more image(s). Please contact Smart Sales for a top-up.",
+                'image_upload' => [
+                    'limit' => $usage['limit'],
+                    'uploaded' => $usage['uploaded'],
+                    'remaining' => $remaining,
+                    'requested' => $newCount,
+                    'almost_full' => $usage['almost_full'],
+                    'limit_reached' => true,
+                ],
+            ], 422);
+        }
+
+        return null;
+    }
 
     public function store(Request $request)
     {
@@ -98,14 +190,95 @@ class PersonController extends Controller
             mkdir($documentPath, 0755, true);
         }
 
+        $limitResponse = $this->validateImageUploadLimit(
+            $request,
+            auth()->user()
+        );
+
+        if ($limitResponse) {
+            return $limitResponse;
+        }
+
         if ($request->hasFile('documents')) {
+
             foreach ($request->file('documents') as $photo) {
 
-                $fileName = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+                $extension = strtolower(
+                    $photo->getClientOriginalExtension()
+                );
 
-                $photo->move($documentPath, $fileName);
+                $fileName = time() . '_' . uniqid() . '.' . $extension;
 
-                $documents[] = 'persons/documents/' . $fileName;
+                $destination = $documentPath . '/' . $fileName;
+
+                $maxSize = 100 * 1024; // 100 KB
+
+                // Check original image size
+                if ($photo->getSize() > $maxSize) {
+
+                    // Initialize Intervention Image
+                    $manager = new ImageManager(new Driver());
+
+                    $image = $manager->read($photo->getRealPath());
+
+                    $quality = 85;
+
+                    $compressed = null;
+
+                    // Compress until image is 100 KB or less
+                    for ($i = 0; $i < 25; $i++) {
+
+                        if ($extension === 'jpg' || $extension === 'jpeg') {
+
+                            $compressed = $image->toJpeg($quality);
+
+                            // Reduce JPEG quality gradually
+                            $quality = max(35, $quality - 5);
+                        } else {
+
+                            // Preserve PNG format and transparency
+                            $compressed = $image->toPng();
+                        }
+
+                        // Check compressed image size
+                        if (strlen((string) $compressed) <= $maxSize) {
+                            break;
+                        }
+
+                        // Reduce image dimensions gradually
+                        $newWidth = max(
+                            1,
+                            (int) ($image->width() * 0.90)
+                        );
+
+                        if ($newWidth >= $image->width()) {
+                            break;
+                        }
+
+                        $image->scale(width: $newWidth);
+                    }
+
+                    // Ensure final image is within 100 KB
+                    if (
+                        $compressed === null ||
+                        strlen((string) $compressed) > $maxSize
+                    ) {
+                        throw new \RuntimeException(
+                            'Unable to compress image below 100 KB.'
+                        );
+                    }
+
+                    // Store compressed image
+                    file_put_contents(
+                        $destination,
+                        (string) $compressed
+                    );
+                } else {
+
+                    // Store original image without modification
+                    $photo->move($documentPath . '/' . $hotelId, $fileName);
+                }
+                $documents[] = 'persons/documents' . '/' . $hotelId . '/'  . $fileName;
             }
         }
 
@@ -127,6 +300,7 @@ class PersonController extends Controller
         ], 201);
     }
 
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -136,12 +310,18 @@ class PersonController extends Controller
             'address' => 'nullable|string',
             'dob' => 'nullable|date',
             'document_id' => 'required|string|max:255',
-
             'pairing_id' => 'nullable|integer',
 
+            // Existing images to retain
+            'keep_documents' => 'nullable|array',
+            'keep_documents.*' => 'string',
+
+            // New images
             'documents' => 'nullable|array',
             'documents.*' => 'required|image|mimes:jpg,jpeg,png|max:5120',
         ]);
+
+        $hotelId = auth()->user()->hotel_id;
 
         $person = Person::where('id', $id)
             ->where('hotel_id', auth()->user()->hotel_id)
@@ -154,22 +334,103 @@ class PersonController extends Controller
             ], 404);
         }
 
-        $documents = $person->documents ?? [];
+        $oldDocuments = $person->documents ?? [];
+
+        // Get images which should be retained
+        $keepDocuments = $request->input('keep_documents', $oldDocuments);
+
+        // Only allow retaining images belonging to this person
+        $keepDocuments = array_values(array_intersect(
+            $oldDocuments,
+            $keepDocuments
+        ));
+
+        $limitResponse = $this->validateImageUploadLimit(
+            $request,
+            auth()->user(),
+            count($oldDocuments),
+            count($keepDocuments)
+        );
+
+        if ($limitResponse) {
+            return $limitResponse;
+        }
 
         $documentPath = public_path('persons/documents');
 
-        if (!file_exists($documentPath)) {
-            mkdir($documentPath, 0755, true);
+        if (!file_exists($documentPath . '/' . $hotelId)) {
+            mkdir($documentPath . '/' . $hotelId, 0755, true);
         }
 
+        // Delete removed images from storage
+        $removedDocuments = array_diff($oldDocuments, $keepDocuments);
+
+        foreach ($removedDocuments as $document) {
+            $fullPath = public_path($document);
+
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+        }
+
+        // Upload newly added images with 100 KB compression
         if ($request->hasFile('documents')) {
+            $manager = new ImageManager(new Driver());
+            $maxSize = 100 * 1024; // 100 KB
+
             foreach ($request->file('documents') as $photo) {
-                $fileName = time() . '_' . uniqid() . '.' .
-                    $photo->getClientOriginalExtension();
+                $extension = strtolower($photo->getClientOriginalExtension());
 
-                $photo->move($documentPath, $fileName);
+                $fileName = time() . '_' . uniqid() . '.' . $extension;
+                $destination = $documentPath . '/' . $hotelId . '/' . $fileName;
 
-                $documents[] = 'persons/documents/' . $fileName;
+                // If image is larger than 100 KB, compress it
+                if ($photo->getSize() > $maxSize) {
+                    $image = $manager->read($photo->getRealPath());
+
+                    $quality = 85;
+                    $compressed = null;
+
+                    for ($i = 0; $i < 25; $i++) {
+
+                        if (in_array($extension, ['jpg', 'jpeg'])) {
+                            $compressed = $image->toJpeg($quality);
+                            $quality = max(35, $quality - 5);
+                        } else {
+                            $compressed = $image->toPng();
+                        }
+
+                        if (strlen((string) $compressed) <= $maxSize) {
+                            break;
+                        }
+
+                        // Reduce image dimensions by 10%
+                        $newWidth = max(1, (int) ($image->width() * 0.90));
+
+                        if ($newWidth >= $image->width()) {
+                            break;
+                        }
+
+                        $image->scale(width: $newWidth);
+                    }
+
+                    if (
+                        $compressed === null ||
+                        strlen((string) $compressed) > $maxSize
+                    ) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Unable to compress one of the uploaded images below 100 KB. Please upload a smaller image.',
+                        ], 422);
+                    }
+
+                    file_put_contents($destination, (string) $compressed);
+                } else {
+                    // Store original image unchanged if it is 100 KB or smaller
+                    $photo->move($documentPath . '/' . $hotelId, $fileName);
+                }
+
+                $keepDocuments[] = 'persons/documents' . '/' . $hotelId . '/' . $fileName;
             }
         }
 
@@ -180,8 +441,10 @@ class PersonController extends Controller
             'address' => $request->address,
             'dob' => $request->dob,
             'document_id' => $request->document_id,
-            'pairing_id' => $request->has('pairing_id') ? $request->pairing_id : $person->pairing_id,
-            'documents' => $documents,
+            'pairing_id' => $request->has('pairing_id')
+                ? $request->pairing_id
+                : $person->pairing_id,
+            'documents' => array_values($keepDocuments),
         ]);
 
         return response()->json([
@@ -190,6 +453,7 @@ class PersonController extends Controller
             'data' => $person->fresh(),
         ]);
     }
+
 
     public function search(Request $request)
     {

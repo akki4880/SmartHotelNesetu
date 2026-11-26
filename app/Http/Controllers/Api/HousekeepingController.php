@@ -37,6 +37,7 @@ class HousekeepingController extends Controller
     /**
      * Update housekeeping status for a room.
      */
+
     public function updateRoomStatus(Request $request)
     {
         $validated = $request->validate([
@@ -48,7 +49,7 @@ class HousekeepingController extends Controller
             'status' => [
                 'required',
                 'integer',
-                'in:0,2,3,4,5',
+                'in:0,1,2,3,4,5',
             ],
         ]);
 
@@ -63,8 +64,31 @@ class HousekeepingController extends Controller
             ], 404);
         }
 
+        $currentStatus = (int) $room->status;
+        $newStatus = (int) $validated['status'];
+
+        // Define allowed status transitions
+        $allowedTransitions = [
+            0 => [1, 2, 5], // Available -> Occupied, Maintenance, Blocked
+            1 => [3],       // Occupied -> Dirty (Checkout)
+            2 => [0],       // Maintenance -> Available
+            3 => [4],       // Dirty -> Cleaning
+            4 => [0, 3],    // Cleaning -> Available, Dirty
+            5 => [0],       // Blocked -> Available
+        ];
+
+        if (
+            !isset($allowedTransitions[$currentStatus]) ||
+            !in_array($newStatus, $allowedTransitions[$currentStatus])
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid room status transition.',
+            ], 422);
+        }
+
         $room->update([
-            'status' => (int) $validated['status'],
+            'status' => $newStatus,
         ]);
 
         return response()->json([
@@ -72,7 +96,8 @@ class HousekeepingController extends Controller
             'message' => 'Room status updated successfully.',
             'data' => [
                 'room_id' => $room->id,
-                'status' => (int) $room->status,
+                'previous_status' => $currentStatus,
+                'status' => $newStatus,
             ],
         ]);
     }

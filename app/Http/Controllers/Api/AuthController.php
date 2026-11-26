@@ -26,7 +26,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'phone' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'device_name' => ['nullable', 'string', 'max:255'],
+            'device_id' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Find user using phone from users table
@@ -105,7 +105,7 @@ class AuthController extends Controller
         $refreshTokenPlain = Str::random(64);
         // Generate Sanctum token
         $token = $user->createToken(
-            $validated['device_name'] ?? 'smarthotel-mobile'
+            $validated['device_id'] ?? 'smarthotel-mobile'
         )->plainTextToken;
         DB::table('refreshtokens')->updateOrInsert(
             ['user_id' => $user->id],
@@ -117,11 +117,10 @@ class AuthController extends Controller
                 'created_at' => now(),
             ]
         );
-
+        $user->unsetRelation('hotel');
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user,
-            'hotel' => $user->hotel,
             'permissions' => $permissions,
             'token' => $token,
             'refresh_token' => $refreshTokenPlain,
