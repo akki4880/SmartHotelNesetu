@@ -15,7 +15,7 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
     Route::get('/delete-account', [AuthController::class, 'deleteAccountPage']);
-.
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
