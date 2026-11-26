@@ -16,7 +16,10 @@ class AuthController extends Controller
      * Login using email and password.
      */
 
-
+    public function deleteAccountPage()
+    {
+        return response()->view('delete-account');
+    }
 
     public function login(Request $request)
     {
